@@ -223,7 +223,9 @@ export function exportToJSON(data: { participants: Participant[], settings: Shif
   const link = document.createElement('a')
   link.href = url
   link.download = `harmonogram-dyzurow-${new Date().toISOString().split('T')[0]}.json`
+  document.body.appendChild(link)
   link.click()
+  document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
 
