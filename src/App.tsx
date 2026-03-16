@@ -33,11 +33,9 @@ import {
   Download, 
   Upload,
   Trash,
-  Pencil,
-  ClockCounterClockwise 
+  Pencil
 } from '@phosphor-icons/react'
 import { AddParticipantDialog } from '@/components/AddParticipantDialog'
-import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
 import { StatsCard } from '@/components/StatsCard'
 import { Participant, ShiftSettings, Shift, DEFAULT_SETTINGS } from '@/lib/types'
 import { generateSchedule, exportToJSON, importFromJSON } from '@/lib/schedule-generator'
@@ -50,7 +48,6 @@ function App() {
   const [historicalShifts, setHistoricalShifts] = useKV<Shift[]>('historicalShifts', [])
   
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [historicalDialogOpen, setHistoricalDialogOpen] = useState(false)
   const [editingParticipant, setEditingParticipant] = useState<Participant | undefined>()
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -82,16 +79,6 @@ function App() {
   const handleDeleteParticipant = (id: string) => {
     setParticipants((current) => (current || []).filter(p => p.id !== id))
     toast.success('Uczestnik usunięty')
-  }
-
-  const handleAddHistoricalShift = (shift: Shift) => {
-    setHistoricalShifts((current) => [...(current || []), { ...shift, isHistorical: true }])
-    toast.success('Przeszły dyżur dodany')
-  }
-
-  const handleDeleteHistoricalShift = (id: string) => {
-    setHistoricalShifts((current) => (current || []).filter(s => s.id !== id))
-    toast.success('Przeszły dyżur usunięty')
   }
 
   const handleGenerateSchedule = async () => {
@@ -433,68 +420,6 @@ function App() {
               schedule={currentSchedule}
               historicalShifts={currentHistoricalShifts}
             />
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ClockCounterClockwise className="text-primary" size={24} />
-                    <CardTitle>Przeszłe Dyżury</CardTitle>
-                  </div>
-                  <Button 
-                    size="sm"
-                    onClick={() => setHistoricalDialogOpen(true)}
-                    disabled={participantsList.length === 0}
-                  >
-                    <Plus size={16} className="mr-2" />
-                    Dodaj
-                  </Button>
-                </div>
-                <CardDescription>
-                  {currentHistoricalShifts.length === 0 
-                    ? 'Dodaj dyżury, które już się odbyły'
-                    : `${currentHistoricalShifts.length} ${currentHistoricalShifts.length === 1 ? 'dyżur' : 'dyżurów'} w historii`
-                  }
-                </CardDescription>
-              </CardHeader>
-              {currentHistoricalShifts.length > 0 && (
-                <CardContent>
-                  <ScrollArea className="h-[250px]">
-                    <div className="flex flex-col gap-2">
-                      {currentHistoricalShifts.map((shift) => (
-                        <div
-                          key={shift.id}
-                          className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
-                        >
-                          <div className="flex flex-col gap-1">
-                            <div className="font-mono text-sm font-medium">
-                              {formatDate(shift.date)}
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {shift.participants.map((participantId) => {
-                                const participant = participantsList.find(p => p.id === participantId)
-                                return participant ? (
-                                  <Badge key={participantId} variant="outline" className="text-xs">
-                                    {participant.firstName[0]}. {participant.lastName}
-                                  </Badge>
-                                ) : null
-                              })}
-                            </div>
-                          </div>
-                          <Button 
-                            size="icon" 
-                            variant="ghost"
-                            onClick={() => handleDeleteHistoricalShift(shift.id)}
-                          >
-                            <Trash size={16} />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              )}
-            </Card>
           </div>
 
           <div className="flex-1">
@@ -614,13 +539,6 @@ function App() {
         }}
         onAdd={handleAddParticipant}
         editParticipant={editingParticipant}
-      />
-
-      <AddHistoricalShiftDialog
-        open={historicalDialogOpen}
-        onOpenChange={setHistoricalDialogOpen}
-        onAdd={handleAddHistoricalShift}
-        participants={participantsList}
       />
     </div>
   )
