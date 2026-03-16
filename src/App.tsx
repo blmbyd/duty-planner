@@ -213,6 +213,17 @@ function App() {
     'weekly': 'Raz w tygodniu'
   }
 
+  const allShifts = [...currentHistoricalShifts, ...currentSchedule].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+
+  const isPastDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date < today
+  }
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
@@ -423,26 +434,30 @@ function App() {
               historicalShifts={currentHistoricalShifts}
             />
 
-            {currentHistoricalShifts.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ClockCounterClockwise className="text-primary" size={24} />
-                      <CardTitle>Przeszłe Dyżury</CardTitle>
-                    </div>
-                    <Button 
-                      size="sm"
-                      onClick={() => setHistoricalDialogOpen(true)}
-                    >
-                      <Plus size={16} className="mr-2" />
-                      Dodaj
-                    </Button>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ClockCounterClockwise className="text-primary" size={24} />
+                    <CardTitle>Przeszłe Dyżury</CardTitle>
                   </div>
-                  <CardDescription>
-                    {currentHistoricalShifts.length} {currentHistoricalShifts.length === 1 ? 'dyżur' : 'dyżurów'} w historii
-                  </CardDescription>
-                </CardHeader>
+                  <Button 
+                    size="sm"
+                    onClick={() => setHistoricalDialogOpen(true)}
+                    disabled={participantsList.length === 0}
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Dodaj
+                  </Button>
+                </div>
+                <CardDescription>
+                  {currentHistoricalShifts.length === 0 
+                    ? 'Dodaj dyżury, które już się odbyły'
+                    : `${currentHistoricalShifts.length} ${currentHistoricalShifts.length === 1 ? 'dyżur' : 'dyżurów'} w historii`
+                  }
+                </CardDescription>
+              </CardHeader>
+              {currentHistoricalShifts.length > 0 && (
                 <CardContent>
                   <ScrollArea className="h-[250px]">
                     <div className="flex flex-col gap-2">
@@ -478,37 +493,8 @@ function App() {
                     </div>
                   </ScrollArea>
                 </CardContent>
-              </Card>
-            )}
-
-            {currentHistoricalShifts.length === 0 && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <ClockCounterClockwise className="text-primary" size={24} />
-                    <CardTitle>Przeszłe Dyżury</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Dodaj dyżury, które już się odbyły
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
-                    <ClockCounterClockwise className="mx-auto mb-2 text-muted-foreground" size={32} />
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Brak przeszłych dyżurów. Dodaj dyżury, które już się odbyły, aby były uwzględnione w statystykach.
-                    </p>
-                    <Button 
-                      onClick={() => setHistoricalDialogOpen(true)}
-                      disabled={participantsList.length === 0}
-                    >
-                      <Plus size={16} className="mr-2" />
-                      Dodaj przeszły dyżur
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+              )}
+            </Card>
           </div>
 
           <div className="flex-1">
@@ -530,14 +516,17 @@ function App() {
                     Generuj harmonogram
                   </Button>
                 </div>
-                {currentSchedule.length > 0 && (
+                {allShifts.length > 0 && (
                   <CardDescription>
-                    Wygenerowano {currentSchedule.length} {currentSchedule.length === 1 ? 'dyżur' : 'dyżurów'} • {frequencyLabels[currentSettings.frequency]}
+                    {currentHistoricalShifts.length > 0 && `${currentHistoricalShifts.length} przeszłych`}
+                    {currentHistoricalShifts.length > 0 && currentSchedule.length > 0 && ' • '}
+                    {currentSchedule.length > 0 && `${currentSchedule.length} zaplanowanych`}
+                    {currentSchedule.length > 0 && ` • ${frequencyLabels[currentSettings.frequency]}`}
                   </CardDescription>
                 )}
               </CardHeader>
               <CardContent>
-                {currentSchedule.length === 0 ? (
+                {allShifts.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border bg-muted/20 p-12 text-center">
                     <CalendarDots className="mx-auto mb-4 text-muted-foreground" size={48} />
                     <h3 className="mb-2 text-lg font-semibold text-foreground">
@@ -562,36 +551,51 @@ function App() {
                           <TableHead className="w-[100px]">#</TableHead>
                           <TableHead>Data</TableHead>
                           <TableHead>Uczestnicy</TableHead>
+                          <TableHead className="w-[120px]">Status</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {currentSchedule.map((shift, index) => (
-                          <TableRow key={shift.id}>
-                            <TableCell className="font-mono font-medium">
-                              {String(index + 1).padStart(2, '0')}
-                            </TableCell>
-                            <TableCell className="font-mono">
-                              {formatDate(shift.date)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-2">
-                                {shift.participants.map((participantId) => {
-                                  const participant = participantsList.find(p => p.id === participantId)
-                                  return (
-                                    <Badge 
-                                      key={participantId}
-                                      variant={participant?.hasKeys ? "default" : "secondary"}
-                                      className={participant?.hasKeys ? "bg-accent text-accent-foreground" : ""}
-                                    >
-                                      {participant?.hasKeys && <Key size={12} className="mr-1" />}
-                                      {getParticipantName(participantId)}
-                                    </Badge>
-                                  )
-                                })}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {allShifts.map((shift, index) => {
+                          const isHistorical = shift.isHistorical || isPastDate(shift.date)
+                          return (
+                            <TableRow 
+                              key={shift.id}
+                              className={isHistorical ? "opacity-60" : ""}
+                            >
+                              <TableCell className="font-mono font-medium">
+                                {String(index + 1).padStart(2, '0')}
+                              </TableCell>
+                              <TableCell className="font-mono">
+                                {formatDate(shift.date)}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-2">
+                                  {shift.participants.map((participantId) => {
+                                    const participant = participantsList.find(p => p.id === participantId)
+                                    return (
+                                      <Badge 
+                                        key={participantId}
+                                        variant={participant?.hasKeys ? "default" : "secondary"}
+                                        className={participant?.hasKeys ? "bg-accent text-accent-foreground" : ""}
+                                      >
+                                        {participant?.hasKeys && <Key size={12} className="mr-1" />}
+                                        {getParticipantName(participantId)}
+                                      </Badge>
+                                    )
+                                  })}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  variant={isHistorical ? "outline" : "default"}
+                                  className={isHistorical ? "text-muted-foreground" : ""}
+                                >
+                                  {isHistorical ? "Wykonany" : "Zaplanowany"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
                       </TableBody>
                     </Table>
                   </ScrollArea>
