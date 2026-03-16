@@ -36,6 +36,7 @@ import {
   Pencil 
 } from '@phosphor-icons/react'
 import { AddParticipantDialog } from '@/components/AddParticipantDialog'
+import { StatsCard } from '@/components/StatsCard'
 import { Participant, ShiftSettings, Shift, DEFAULT_SETTINGS } from '@/lib/types'
 import { generateSchedule, exportToJSON, importFromJSON } from '@/lib/schedule-generator'
 import { motion } from 'framer-motion'
@@ -394,6 +395,11 @@ function App() {
                 </div>
               </CardContent>
             </Card>
+
+            <StatsCard 
+              participants={participantsList}
+              schedule={currentSchedule}
+            />
           </div>
 
           <div className="flex-1">
