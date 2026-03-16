@@ -124,6 +124,51 @@ function App() {
     e.target.value = ''
   }
 
+  const handleAddSampleParticipants = async () => {
+    const sampleParticipants: Participant[] = [
+      { id: 'p1', firstName: 'Anna', lastName: 'Kowalska', hasKeys: true },
+      { id: 'p2', firstName: 'Jan', lastName: 'Nowak', hasKeys: false },
+      { id: 'p3', firstName: 'Maria', lastName: 'Wiśniewska', hasKeys: true },
+      { id: 'p4', firstName: 'Piotr', lastName: 'Wójcik', hasKeys: false },
+      { id: 'p5', firstName: 'Katarzyna', lastName: 'Kamińska', hasKeys: false },
+      { id: 'p6', firstName: 'Tomasz', lastName: 'Lewandowski', hasKeys: false },
+      { id: 'p7', firstName: 'Agnieszka', lastName: 'Zielińska', hasKeys: false },
+      { id: 'p8', firstName: 'Michał', lastName: 'Szymański', hasKeys: false },
+      { id: 'p9', firstName: 'Magdalena', lastName: 'Dąbrowska', hasKeys: true },
+      { id: 'p10', firstName: 'Krzysztof', lastName: 'Mazur', hasKeys: false },
+    ]
+
+    let updatedParticipants: Participant[] = []
+    
+    setParticipants((current) => {
+      const existing = current || []
+      const newParticipants = sampleParticipants.filter(
+        sample => !existing.some(p => p.id === sample.id)
+      )
+      updatedParticipants = [...existing, ...newParticipants]
+      return updatedParticipants
+    })
+
+    toast.success(`Dodano ${sampleParticipants.length} przykładowych uczestników`)
+
+    setTimeout(() => {
+      if (updatedParticipants.length >= currentSettings.peoplePerShift) {
+        setIsGenerating(true)
+        setTimeout(async () => {
+          try {
+            const newSchedule = generateSchedule(updatedParticipants, currentSettings)
+            setSchedule(newSchedule)
+            toast.success(`Automatycznie wygenerowano harmonogram - ${newSchedule.length} dyżurów`)
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : 'Błąd generowania harmonogramu')
+          } finally {
+            setIsGenerating(false)
+          }
+        }, 500)
+      }
+    }, 100)
+  }
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr)
     return date.toLocaleDateString('pl-PL', { 
@@ -171,16 +216,26 @@ function App() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button 
-                  className="w-full mb-4" 
-                  onClick={() => {
-                    setEditingParticipant(undefined)
-                    setDialogOpen(true)
-                  }}
-                >
-                  <Plus className="mr-2" />
-                  Dodaj uczestnika
-                </Button>
+                <div className="flex gap-2 mb-4">
+                  <Button 
+                    className="flex-1" 
+                    onClick={() => {
+                      setEditingParticipant(undefined)
+                      setDialogOpen(true)
+                    }}
+                  >
+                    <Plus className="mr-2" />
+                    Dodaj uczestnika
+                  </Button>
+                  <Button 
+                    variant="secondary"
+                    onClick={handleAddSampleParticipants}
+                    disabled={participantsList.length >= 10}
+                  >
+                    <Users className="mr-2" />
+                    Wypełnij przykładami
+                  </Button>
+                </div>
 
                 {participantsList.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
