@@ -33,9 +33,11 @@ import {
   Download, 
   Upload,
   Trash,
-  Pencil
+  Pencil,
+  ClockCounterClockwise
 } from '@phosphor-icons/react'
 import { AddParticipantDialog } from '@/components/AddParticipantDialog'
+import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
 import { StatsCard } from '@/components/StatsCard'
 import { Participant, ShiftSettings, Shift, DEFAULT_SETTINGS } from '@/lib/types'
 import { generateSchedule, exportToJSON, importFromJSON } from '@/lib/schedule-generator'
@@ -48,6 +50,7 @@ function App() {
   const [historicalShifts, setHistoricalShifts] = useKV<Shift[]>('historicalShifts', [])
   
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [historicalDialogOpen, setHistoricalDialogOpen] = useState(false)
   const [editingParticipant, setEditingParticipant] = useState<Participant | undefined>()
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -79,6 +82,15 @@ function App() {
   const handleDeleteParticipant = (id: string) => {
     setParticipants((current) => (current || []).filter(p => p.id !== id))
     toast.success('Uczestnik usunięty')
+  }
+
+  const handleAddHistoricalShift = (shift: Shift) => {
+    setHistoricalShifts((current) => {
+      const existing = (current || []).some(s => s.id === shift.id)
+      if (existing) return current || []
+      return [...(current || []), { ...shift, isHistorical: true }]
+    })
+    toast.success('Przeszły dyżur dodany')
   }
 
   const handleGenerateSchedule = async () => {
@@ -430,16 +442,26 @@ function App() {
                     <CalendarDots className="text-primary" size={24} />
                     <CardTitle>Harmonogram Dyżurów</CardTitle>
                   </div>
-                  <Button 
-                    onClick={handleGenerateSchedule}
-                    disabled={participantsList.length < currentSettings.peoplePerShift || isGenerating}
-                  >
-                    <ArrowsClockwise 
-                      size={16} 
-                      className={`mr-2 ${isGenerating ? 'animate-spin' : ''}`} 
-                    />
-                    Generuj harmonogram
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => setHistoricalDialogOpen(true)}
+                      disabled={participantsList.length === 0}
+                    >
+                      <ClockCounterClockwise size={16} className="mr-2" />
+                      Dodaj przeszły dyżur
+                    </Button>
+                    <Button 
+                      onClick={handleGenerateSchedule}
+                      disabled={participantsList.length < currentSettings.peoplePerShift || isGenerating}
+                    >
+                      <ArrowsClockwise 
+                        size={16} 
+                        className={`mr-2 ${isGenerating ? 'animate-spin' : ''}`} 
+                      />
+                      Generuj harmonogram
+                    </Button>
+                  </div>
                 </div>
                 {allShifts.length > 0 && (
                   <CardDescription>
@@ -539,6 +561,13 @@ function App() {
         }}
         onAdd={handleAddParticipant}
         editParticipant={editingParticipant}
+      />
+
+      <AddHistoricalShiftDialog
+        open={historicalDialogOpen}
+        onOpenChange={setHistoricalDialogOpen}
+        onAdd={handleAddHistoricalShift}
+        participants={participantsList}
       />
     </div>
   )
