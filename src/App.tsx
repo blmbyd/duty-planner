@@ -33,9 +33,11 @@ import {
   Download, 
   Upload,
   Trash,
-  Pencil 
+  Pencil,
+  ClockCounterClockwise 
 } from '@phosphor-icons/react'
 import { AddParticipantDialog } from '@/components/AddParticipantDialog'
+import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
 import { StatsCard } from '@/components/StatsCard'
 import { Participant, ShiftSettings, Shift, DEFAULT_SETTINGS } from '@/lib/types'
 import { generateSchedule, exportToJSON, importFromJSON } from '@/lib/schedule-generator'
@@ -45,14 +47,17 @@ function App() {
   const [participants, setParticipants] = useKV<Participant[]>('participants', [])
   const [settings, setSettings] = useKV<ShiftSettings>('settings', DEFAULT_SETTINGS)
   const [schedule, setSchedule] = useKV<Shift[]>('schedule', [])
+  const [historicalShifts, setHistoricalShifts] = useKV<Shift[]>('historicalShifts', [])
   
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [historicalDialogOpen, setHistoricalDialogOpen] = useState(false)
   const [editingParticipant, setEditingParticipant] = useState<Participant | undefined>()
   const [isGenerating, setIsGenerating] = useState(false)
 
   const participantsList = participants || []
   const currentSettings = settings || DEFAULT_SETTINGS
   const currentSchedule = schedule || []
+  const currentHistoricalShifts = historicalShifts || []
 
   const handleAddParticipant = (participant: Participant) => {
     setParticipants((current) => {
@@ -79,6 +84,16 @@ function App() {
     toast.success('Uczestnik usunięty')
   }
 
+  const handleAddHistoricalShift = (shift: Shift) => {
+    setHistoricalShifts((current) => [...(current || []), { ...shift, isHistorical: true }])
+    toast.success('Przeszły dyżur dodany')
+  }
+
+  const handleDeleteHistoricalShift = (id: string) => {
+    setHistoricalShifts((current) => (current || []).filter(s => s.id !== id))
+    toast.success('Przeszły dyżur usunięty')
+  }
+
   const handleGenerateSchedule = async () => {
     if (participantsList.length < currentSettings.peoplePerShift) {
       toast.error('Za mało uczestników dla wymaganej liczby osób na dyżurze')
@@ -94,7 +109,7 @@ function App() {
     setIsGenerating(true)
     try {
       await new Promise(resolve => setTimeout(resolve, 500))
-      const newSchedule = generateSchedule(participantsList, currentSettings)
+      const newSchedule = generateSchedule(participantsList, currentSettings, currentHistoricalShifts)
       setSchedule(newSchedule)
       toast.success(`Wygenerowano harmonogram - ${newSchedule.length} dyżurów`)
     } catch (error) {
@@ -105,7 +120,12 @@ function App() {
   }
 
   const handleExport = () => {
-    exportToJSON({ participants: participantsList, settings: currentSettings, schedule: currentSchedule })
+    exportToJSON({ 
+      participants: participantsList, 
+      settings: currentSettings, 
+      schedule: currentSchedule,
+      historicalShifts: currentHistoricalShifts 
+    })
     toast.success('Harmonogram wyeksportowany')
   }
 
@@ -118,6 +138,7 @@ function App() {
       setParticipants(data.participants || [])
       setSettings(data.settings || DEFAULT_SETTINGS)
       setSchedule(data.schedule || [])
+      setHistoricalShifts(data.historicalShifts || [])
       toast.success('Dane zaimportowane')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Błąd importu')
@@ -157,7 +178,7 @@ function App() {
         setIsGenerating(true)
         setTimeout(async () => {
           try {
-            const newSchedule = generateSchedule(updatedParticipants, currentSettings)
+            const newSchedule = generateSchedule(updatedParticipants, currentSettings, currentHistoricalShifts)
             setSchedule(newSchedule)
             toast.success(`Automatycznie wygenerowano harmonogram - ${newSchedule.length} dyżurów`)
           } catch (error) {
@@ -399,7 +420,95 @@ function App() {
             <StatsCard 
               participants={participantsList}
               schedule={currentSchedule}
+              historicalShifts={currentHistoricalShifts}
             />
+
+            {currentHistoricalShifts.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ClockCounterClockwise className="text-primary" size={24} />
+                      <CardTitle>Przeszłe Dyżury</CardTitle>
+                    </div>
+                    <Button 
+                      size="sm"
+                      onClick={() => setHistoricalDialogOpen(true)}
+                    >
+                      <Plus size={16} className="mr-2" />
+                      Dodaj
+                    </Button>
+                  </div>
+                  <CardDescription>
+                    {currentHistoricalShifts.length} {currentHistoricalShifts.length === 1 ? 'dyżur' : 'dyżurów'} w historii
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[250px]">
+                    <div className="flex flex-col gap-2">
+                      {currentHistoricalShifts.map((shift) => (
+                        <div
+                          key={shift.id}
+                          className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
+                        >
+                          <div className="flex flex-col gap-1">
+                            <div className="font-mono text-sm font-medium">
+                              {formatDate(shift.date)}
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {shift.participants.map((participantId) => {
+                                const participant = participantsList.find(p => p.id === participantId)
+                                return participant ? (
+                                  <Badge key={participantId} variant="outline" className="text-xs">
+                                    {participant.firstName[0]}. {participant.lastName}
+                                  </Badge>
+                                ) : null
+                              })}
+                            </div>
+                          </div>
+                          <Button 
+                            size="icon" 
+                            variant="ghost"
+                            onClick={() => handleDeleteHistoricalShift(shift.id)}
+                          >
+                            <Trash size={16} />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            )}
+
+            {currentHistoricalShifts.length === 0 && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <ClockCounterClockwise className="text-primary" size={24} />
+                    <CardTitle>Przeszłe Dyżury</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Dodaj dyżury, które już się odbyły
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
+                    <ClockCounterClockwise className="mx-auto mb-2 text-muted-foreground" size={32} />
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Brak przeszłych dyżurów. Dodaj dyżury, które już się odbyły, aby były uwzględnione w statystykach.
+                    </p>
+                    <Button 
+                      onClick={() => setHistoricalDialogOpen(true)}
+                      disabled={participantsList.length === 0}
+                    >
+                      <Plus size={16} className="mr-2" />
+                      Dodaj przeszły dyżur
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <div className="flex-1">
@@ -501,6 +610,13 @@ function App() {
         }}
         onAdd={handleAddParticipant}
         editParticipant={editingParticipant}
+      />
+
+      <AddHistoricalShiftDialog
+        open={historicalDialogOpen}
+        onOpenChange={setHistoricalDialogOpen}
+        onAdd={handleAddHistoricalShift}
+        participants={participantsList}
       />
     </div>
   )

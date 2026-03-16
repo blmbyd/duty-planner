@@ -93,7 +93,8 @@ function scoreSchedule(schedule: Shift[], participants: Participant[]): number {
 
 export function generateSchedule(
   participants: Participant[],
-  settings: ShiftSettings
+  settings: ShiftSettings,
+  historicalShifts: Shift[] = []
 ): Shift[] {
   const dates = getDaysBetweenDates(settings.startDate, settings.endDate, settings.frequency)
   const specialPeople = participants.filter(p => p.hasKeys)
@@ -116,6 +117,14 @@ export function generateSchedule(
     const schedule: Shift[] = []
     const participantShiftCounts = new Map<string, number>()
     participants.forEach(p => participantShiftCounts.set(p.id, 0))
+    
+    historicalShifts.forEach(shift => {
+      shift.participants.forEach(participantId => {
+        if (participantShiftCounts.has(participantId)) {
+          participantShiftCounts.set(participantId, (participantShiftCounts.get(participantId) || 0) + 1)
+        }
+      })
+    })
     
     for (const date of dates) {
       const shiftParticipants: string[] = []
@@ -207,7 +216,7 @@ export function generateSchedule(
   return bestSchedule
 }
 
-export function exportToJSON(data: { participants: Participant[], settings: ShiftSettings, schedule: Shift[] }): void {
+export function exportToJSON(data: { participants: Participant[], settings: ShiftSettings, schedule: Shift[], historicalShifts?: Shift[] }): void {
   const json = JSON.stringify(data, null, 2)
   const blob = new Blob([json], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -218,7 +227,7 @@ export function exportToJSON(data: { participants: Participant[], settings: Shif
   URL.revokeObjectURL(url)
 }
 
-export function importFromJSON(file: File): Promise<{ participants: Participant[], settings: ShiftSettings, schedule: Shift[] }> {
+export function importFromJSON(file: File): Promise<{ participants: Participant[], settings: ShiftSettings, schedule: Shift[], historicalShifts?: Shift[] }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {

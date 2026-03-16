@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 interface StatsCardProps {
   participants: Participant[]
   schedule: Shift[]
+  historicalShifts?: Shift[]
 }
 
 interface ParticipantStats {
@@ -16,15 +17,23 @@ interface ParticipantStats {
   lastName: string
   hasKeys: boolean
   shiftsCount: number
+  historicalCount: number
+  totalCount: number
   percentage: number
 }
 
-export function StatsCard({ participants, schedule }: StatsCardProps) {
+export function StatsCard({ participants, schedule, historicalShifts = [] }: StatsCardProps) {
   const calculateStats = (): ParticipantStats[] => {
     const stats = participants.map(participant => {
       const shiftsCount = schedule.filter(shift => 
         shift.participants.includes(participant.id)
       ).length
+
+      const historicalCount = historicalShifts.filter(shift => 
+        shift.participants.includes(participant.id)
+      ).length
+
+      const totalCount = shiftsCount + historicalCount
 
       return {
         id: participant.id,
@@ -32,17 +41,20 @@ export function StatsCard({ participants, schedule }: StatsCardProps) {
         lastName: participant.lastName,
         hasKeys: participant.hasKeys,
         shiftsCount,
+        historicalCount,
+        totalCount,
         percentage: schedule.length > 0 ? (shiftsCount / schedule.length) * 100 : 0
       }
     })
 
-    return stats.sort((a, b) => b.shiftsCount - a.shiftsCount)
+    return stats.sort((a, b) => b.totalCount - a.totalCount)
   }
 
   const stats = calculateStats()
   const totalShifts = schedule.length
+  const totalHistorical = historicalShifts.length
   const avgShiftsPerPerson = stats.length > 0 
-    ? stats.reduce((sum, s) => sum + s.shiftsCount, 0) / stats.length 
+    ? stats.reduce((sum, s) => sum + s.totalCount, 0) / stats.length 
     : 0
 
   const getTrendIcon = (count: number) => {
@@ -52,7 +64,7 @@ export function StatsCard({ participants, schedule }: StatsCardProps) {
   }
 
   const getBarWidth = (count: number) => {
-    const maxCount = Math.max(...stats.map(s => s.shiftsCount), 1)
+    const maxCount = Math.max(...stats.map(s => s.totalCount), 1)
     return `${(count / maxCount) * 100}%`
   }
 
@@ -68,18 +80,18 @@ export function StatsCard({ participants, schedule }: StatsCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {stats.length === 0 || totalShifts === 0 ? (
+        {stats.length === 0 || (totalShifts === 0 && totalHistorical === 0) ? (
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
             <ChartBar className="mx-auto mb-2 text-muted-foreground" size={32} />
             <p className="text-sm text-muted-foreground">
-              Brak danych do wyświetlenia. Wygeneruj harmonogram aby zobaczyć statystyki.
+              Brak danych do wyświetlenia. Wygeneruj harmonogram lub dodaj przeszłe dyżury aby zobaczyć statystyki.
             </p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex gap-4 rounded-lg bg-muted/30 p-4">
               <div className="flex-1">
-                <div className="text-2xl font-bold text-foreground">{totalShifts}</div>
+                <div className="text-2xl font-bold text-foreground">{totalShifts + totalHistorical}</div>
                 <div className="text-xs text-muted-foreground">Łącznie dyżurów</div>
               </div>
               <div className="flex-1">
@@ -120,21 +132,28 @@ export function StatsCard({ participants, schedule }: StatsCardProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {getTrendIcon(stat.shiftsCount)}
+                        {getTrendIcon(stat.totalCount)}
                         <div className="text-right">
                           <div className="text-lg font-bold font-mono text-foreground">
-                            {stat.shiftsCount}
+                            {stat.totalCount}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {stat.percentage.toFixed(0)}%
-                          </div>
+                          {stat.historicalCount > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              {stat.shiftsCount} + {stat.historicalCount} przeszłych
+                            </div>
+                          )}
+                          {stat.historicalCount === 0 && totalShifts > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              {stat.percentage.toFixed(0)}%
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
-                        animate={{ width: getBarWidth(stat.shiftsCount) }}
+                        animate={{ width: getBarWidth(stat.totalCount) }}
                         transition={{ delay: index * 0.05 + 0.2, duration: 0.5 }}
                         className="h-full bg-accent"
                       />

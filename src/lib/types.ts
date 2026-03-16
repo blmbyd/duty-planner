@@ -16,12 +16,14 @@ export interface Shift {
   id: string
   date: string
   participants: string[]
+  isHistorical?: boolean
 }
 
 export interface AppData {
   participants: Participant[]
   settings: ShiftSettings
   schedule: Shift[]
+  historicalShifts: Shift[]
 }
 
 export const DEFAULT_SETTINGS: ShiftSettings = {
