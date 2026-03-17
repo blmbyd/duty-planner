@@ -70,98 +70,77 @@ export function StatsCard({ participants, schedule, historicalShifts = [] }: Sta
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <ChartBar className="text-primary" size={24} />
-          <CardTitle>Statystyki</CardTitle>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ChartBar className="text-primary" size={20} />
+            <CardTitle className="text-base">Statystyki</CardTitle>
+          </div>
+          {stats.length > 0 && (totalShifts > 0 || totalHistorical > 0) && (
+            <div className="flex gap-3 text-xs">
+              <div className="flex items-center gap-1">
+                <span className="font-mono font-semibold text-foreground">{totalShifts + totalHistorical}</span>
+                <span className="text-muted-foreground">łącznie</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-mono font-semibold text-foreground">{avgShiftsPerPerson.toFixed(1)}</span>
+                <span className="text-muted-foreground">średnia</span>
+              </div>
+            </div>
+          )}
         </div>
-        <CardDescription>
-          Rozkład dyżurów pomiędzy uczestnikami
-        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {stats.length === 0 || (totalShifts === 0 && totalHistorical === 0) ? (
-          <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
-            <ChartBar className="mx-auto mb-2 text-muted-foreground" size={32} />
-            <p className="text-sm text-muted-foreground">
-              Brak danych do wyświetlenia. Wygeneruj harmonogram lub dodaj przeszłe dyżury aby zobaczyć statystyki.
+          <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
+            <ChartBar className="mx-auto mb-2 text-muted-foreground" size={24} />
+            <p className="text-xs text-muted-foreground">
+              Brak danych. Wygeneruj harmonogram lub dodaj przeszłe dyżury.
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-4 rounded-lg bg-muted/30 p-4">
-              <div className="flex-1">
-                <div className="text-2xl font-bold text-foreground">{totalShifts + totalHistorical}</div>
-                <div className="text-xs text-muted-foreground">Łącznie dyżurów</div>
-              </div>
-              <div className="flex-1">
-                <div className="text-2xl font-bold text-foreground">{avgShiftsPerPerson.toFixed(1)}</div>
-                <div className="text-xs text-muted-foreground">Średnia na osobę</div>
-              </div>
-              <div className="flex-1">
-                <div className="text-2xl font-bold text-foreground">{stats.length}</div>
-                <div className="text-xs text-muted-foreground">Uczestników</div>
-              </div>
-            </div>
-
-            <ScrollArea className="h-[400px]">
-              <div className="flex flex-col gap-3">
-                {stats.map((stat, index) => (
-                  <motion.div
-                    key={stat.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-sm">
-                          {stat.firstName[0]}{stat.lastName[0]}
-                        </div>
-                        <div>
-                          <div className="font-medium text-card-foreground">
-                            {stat.firstName} {stat.lastName}
-                          </div>
-                          {stat.hasKeys && (
-                            <Badge variant="default" className="mt-1 bg-accent text-accent-foreground text-xs">
-                              <Key size={10} className="mr-1" />
-                              Klucze
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getTrendIcon(stat.totalCount)}
-                        <div className="text-right">
-                          <div className="text-lg font-bold font-mono text-foreground">
-                            {stat.totalCount}
-                          </div>
-                          {stat.historicalCount > 0 && (
-                            <div className="text-xs text-muted-foreground">
-                              {stat.shiftsCount} + {stat.historicalCount} przeszłych
-                            </div>
-                          )}
-                          {stat.historicalCount === 0 && totalShifts > 0 && (
-                            <div className="text-xs text-muted-foreground">
-                              {stat.percentage.toFixed(0)}%
-                            </div>
-                          )}
-                        </div>
-                      </div>
+          <div className="flex flex-col gap-1.5">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={stat.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.03 }}
+                className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-xs">
+                  {stat.firstName[0]}{stat.lastName[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-sm text-card-foreground truncate">
+                      {stat.firstName} {stat.lastName}
+                    </span>
+                    {stat.hasKeys && (
+                      <Badge variant="default" className="bg-accent text-accent-foreground h-4 px-1 text-[10px] gap-0.5">
+                        <Key size={9} />K
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="h-1.5 w-16 rounded-full bg-muted overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: getBarWidth(stat.totalCount) }}
+                      transition={{ delay: index * 0.03 + 0.1, duration: 0.4 }}
+                      className="h-full bg-accent"
+                    />
+                  </div>
+                  {getTrendIcon(stat.totalCount)}
+                  <div className="text-right">
+                    <div className="text-sm font-bold font-mono text-foreground">
+                      {stat.totalCount}
                     </div>
-                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: getBarWidth(stat.totalCount) }}
-                        transition={{ delay: index * 0.05 + 0.2, duration: 0.5 }}
-                        className="h-full bg-accent"
-                      />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </ScrollArea>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         )}
       </CardContent>
