@@ -1,4 +1,62 @@
-import { Participant, ShiftSettings, Shift } from './types'
+import { Participant, ShiftSettings, Shift, SpecialDayType } from './types'
+
+function getSpecialDaysInRange(startDate: string, endDate: string, specialDayType: SpecialDayType): string[] {
+  if (specialDayType === 'none') return []
+  
+  const specialDays: string[] = []
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  
+  let currentMonth = new Date(start.getFullYear(), start.getMonth(), 1)
+  
+  while (currentMonth <= end) {
+    const specialDay = getSpecialDayForMonth(currentMonth, specialDayType)
+    if (specialDay && specialDay >= start && specialDay <= end) {
+      specialDays.push(specialDay.toISOString().split('T')[0])
+    }
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+  }
+  
+  return specialDays
+}
+
+function getSpecialDayForMonth(monthDate: Date, specialDayType: SpecialDayType): Date | null {
+  if (specialDayType === 'none') return null
+  
+  const year = monthDate.getFullYear()
+  const month = monthDate.getMonth()
+  
+  const firstDay = new Date(year, month, 1)
+  const firstMonday = new Date(firstDay)
+  
+  while (firstMonday.getDay() !== 1) {
+    firstMonday.setDate(firstMonday.getDate() + 1)
+  }
+  
+  switch (specialDayType) {
+    case 'first-monday':
+      return firstMonday
+    case 'second-monday': {
+      const secondMonday = new Date(firstMonday)
+      secondMonday.setDate(secondMonday.getDate() + 7)
+      return secondMonday
+    }
+    case 'third-monday': {
+      const thirdMonday = new Date(firstMonday)
+      thirdMonday.setDate(thirdMonday.getDate() + 14)
+      return thirdMonday
+    }
+    case 'last-monday': {
+      const lastMonday = new Date(year, month + 1, 0)
+      while (lastMonday.getDay() !== 1) {
+        lastMonday.setDate(lastMonday.getDate() - 1)
+      }
+      return lastMonday
+    }
+    default:
+      return null
+  }
+}
 
 function getDaysBetweenDates(startDate: string, endDate: string, frequency: ShiftSettings['frequency']): string[] {
   const dates: string[] = []
@@ -98,6 +156,9 @@ export function generateSchedule(
   existingSchedule: Shift[] = []
 ): Shift[] {
   const allDates = getDaysBetweenDates(settings.startDate, settings.endDate, settings.frequency)
+  const specialDays = getSpecialDaysInRange(settings.startDate, settings.endDate, settings.specialDayType)
+  const specialDaysSet = new Set(specialDays)
+  
   const specialPeople = participants.filter(p => p.hasKeys)
   const regularPeople = participants.filter(p => !p.hasKeys)
   
@@ -112,7 +173,8 @@ export function generateSchedule(
   const existingDatesSet = new Set(existingSchedule.map(s => s.date))
   const existingScheduleMap = new Map(existingSchedule.map(s => [s.date, s]))
   
-  const missingDates = allDates.filter(date => !existingDatesSet.has(date))
+  const allRequiredDates = [...new Set([...allDates, ...specialDays])].sort()
+  const missingDates = allRequiredDates.filter(date => !existingDatesSet.has(date))
   
   if (missingDates.length === 0) {
     return existingSchedule
@@ -128,12 +190,19 @@ export function generateSchedule(
   for (let attempt = 0; attempt < attempts; attempt++) {
     const newShifts: Shift[] = []
     const participantShiftCounts = new Map<string, number>()
-    participants.forEach(p => participantShiftCounts.set(p.id, 0))
+    const participantSpecialDayCounts = new Map<string, number>()
+    participants.forEach(p => {
+      participantShiftCounts.set(p.id, 0)
+      participantSpecialDayCounts.set(p.id, 0)
+    })
     
     allHistoricalShifts.forEach(shift => {
       shift.participants.forEach(participantId => {
         if (participantShiftCounts.has(participantId)) {
           participantShiftCounts.set(participantId, (participantShiftCounts.get(participantId) || 0) + 1)
+          if (shift.isSpecialDay) {
+            participantSpecialDayCounts.set(participantId, (participantSpecialDayCounts.get(participantId) || 0) + 1)
+          }
         }
       })
     })
@@ -141,72 +210,128 @@ export function generateSchedule(
     const combinedSchedule = [...allHistoricalShifts]
     
     for (const date of missingDates) {
+      const isSpecialDay = specialDaysSet.has(date)
+      const peopleCount = isSpecialDay && settings.specialDayPeopleCount 
+        ? settings.specialDayPeopleCount 
+        : settings.peoplePerShift
+      
       const shiftParticipants: string[] = []
       
       const recentShifts = combinedSchedule.slice(-5)
       
-      const availableSpecial = shuffleArray(
-        specialPeople.filter(p => {
+      if (isSpecialDay) {
+        const availableForSpecialDay = shuffleArray(participants.filter(p => {
           const lastTwoShifts = recentShifts.slice(-2)
           return !lastTwoShifts.some(shift => shift.participants.includes(p.id))
-        })
-      ).sort((a, b) => {
-        const countA = participantShiftCounts.get(a.id) || 0
-        const countB = participantShiftCounts.get(b.id) || 0
-        return countA - countB
-      })
-      
-      if (availableSpecial.length > 0) {
-        shiftParticipants.push(availableSpecial[0].id)
-        participantShiftCounts.set(availableSpecial[0].id, (participantShiftCounts.get(availableSpecial[0].id) || 0) + 1)
-      } else if (specialPeople.length > 0) {
-        const fallbackSpecial = shuffleArray(specialPeople).sort((a, b) => {
+        })).sort((a, b) => {
+          const specialCountA = participantSpecialDayCounts.get(a.id) || 0
+          const specialCountB = participantSpecialDayCounts.get(b.id) || 0
+          if (specialCountA !== specialCountB) {
+            return specialCountA - specialCountB
+          }
           const countA = participantShiftCounts.get(a.id) || 0
           const countB = participantShiftCounts.get(b.id) || 0
           return countA - countB
-        })[0]
-        shiftParticipants.push(fallbackSpecial.id)
-        participantShiftCounts.set(fallbackSpecial.id, (participantShiftCounts.get(fallbackSpecial.id) || 0) + 1)
-      }
-      
-      const remainingSlots = settings.peoplePerShift - shiftParticipants.length
-      
-      const availableRegular = shuffleArray(
-        regularPeople.filter(p => {
-          const lastTwoShifts = recentShifts.slice(-2)
-          return !lastTwoShifts.some(shift => shift.participants.includes(p.id))
         })
-      ).sort((a, b) => {
-        const countA = participantShiftCounts.get(a.id) || 0
-        const countB = participantShiftCounts.get(b.id) || 0
-        return countA - countB
-      })
-      
-      for (let i = 0; i < remainingSlots && i < availableRegular.length; i++) {
-        shiftParticipants.push(availableRegular[i].id)
-        participantShiftCounts.set(availableRegular[i].id, (participantShiftCounts.get(availableRegular[i].id) || 0) + 1)
-      }
-      
-      if (shiftParticipants.length < settings.peoplePerShift) {
-        const allAvailable = shuffleArray(
-          participants.filter(p => !shiftParticipants.includes(p.id))
+        
+        const hasKeysInSelection = availableForSpecialDay.some(p => p.hasKeys)
+        if (hasKeysInSelection) {
+          const personWithKeys = availableForSpecialDay.find(p => p.hasKeys)!
+          shiftParticipants.push(personWithKeys.id)
+          participantShiftCounts.set(personWithKeys.id, (participantShiftCounts.get(personWithKeys.id) || 0) + 1)
+          participantSpecialDayCounts.set(personWithKeys.id, (participantSpecialDayCounts.get(personWithKeys.id) || 0) + 1)
+        }
+        
+        for (const person of availableForSpecialDay) {
+          if (shiftParticipants.length >= peopleCount) break
+          if (!shiftParticipants.includes(person.id)) {
+            shiftParticipants.push(person.id)
+            participantShiftCounts.set(person.id, (participantShiftCounts.get(person.id) || 0) + 1)
+            participantSpecialDayCounts.set(person.id, (participantSpecialDayCounts.get(person.id) || 0) + 1)
+          }
+        }
+        
+        if (shiftParticipants.length < peopleCount) {
+          const fallbackAvailable = shuffleArray(
+            participants.filter(p => !shiftParticipants.includes(p.id))
+          ).sort((a, b) => {
+            const specialCountA = participantSpecialDayCounts.get(a.id) || 0
+            const specialCountB = participantSpecialDayCounts.get(b.id) || 0
+            return specialCountA - specialCountB
+          })
+          
+          for (const person of fallbackAvailable) {
+            if (shiftParticipants.length >= peopleCount) break
+            shiftParticipants.push(person.id)
+            participantShiftCounts.set(person.id, (participantShiftCounts.get(person.id) || 0) + 1)
+            participantSpecialDayCounts.set(person.id, (participantSpecialDayCounts.get(person.id) || 0) + 1)
+          }
+        }
+      } else {
+        const availableSpecial = shuffleArray(
+          specialPeople.filter(p => {
+            const lastTwoShifts = recentShifts.slice(-2)
+            return !lastTwoShifts.some(shift => shift.participants.includes(p.id))
+          })
         ).sort((a, b) => {
           const countA = participantShiftCounts.get(a.id) || 0
           const countB = participantShiftCounts.get(b.id) || 0
           return countA - countB
         })
         
-        for (const person of allAvailable) {
-          if (shiftParticipants.length >= settings.peoplePerShift) break
-          shiftParticipants.push(person.id)
-          participantShiftCounts.set(person.id, (participantShiftCounts.get(person.id) || 0) + 1)
+        if (availableSpecial.length > 0) {
+          shiftParticipants.push(availableSpecial[0].id)
+          participantShiftCounts.set(availableSpecial[0].id, (participantShiftCounts.get(availableSpecial[0].id) || 0) + 1)
+        } else if (specialPeople.length > 0) {
+          const fallbackSpecial = shuffleArray(specialPeople).sort((a, b) => {
+            const countA = participantShiftCounts.get(a.id) || 0
+            const countB = participantShiftCounts.get(b.id) || 0
+            return countA - countB
+          })[0]
+          shiftParticipants.push(fallbackSpecial.id)
+          participantShiftCounts.set(fallbackSpecial.id, (participantShiftCounts.get(fallbackSpecial.id) || 0) + 1)
+        }
+        
+        const remainingSlots = peopleCount - shiftParticipants.length
+        
+        const availableRegular = shuffleArray(
+          regularPeople.filter(p => {
+            const lastTwoShifts = recentShifts.slice(-2)
+            return !lastTwoShifts.some(shift => shift.participants.includes(p.id))
+          })
+        ).sort((a, b) => {
+          const countA = participantShiftCounts.get(a.id) || 0
+          const countB = participantShiftCounts.get(b.id) || 0
+          return countA - countB
+        })
+        
+        for (let i = 0; i < remainingSlots && i < availableRegular.length; i++) {
+          shiftParticipants.push(availableRegular[i].id)
+          participantShiftCounts.set(availableRegular[i].id, (participantShiftCounts.get(availableRegular[i].id) || 0) + 1)
+        }
+        
+        if (shiftParticipants.length < peopleCount) {
+          const allAvailable = shuffleArray(
+            participants.filter(p => !shiftParticipants.includes(p.id))
+          ).sort((a, b) => {
+            const countA = participantShiftCounts.get(a.id) || 0
+            const countB = participantShiftCounts.get(b.id) || 0
+            return countA - countB
+          })
+          
+          for (const person of allAvailable) {
+            if (shiftParticipants.length >= peopleCount) break
+            shiftParticipants.push(person.id)
+            participantShiftCounts.set(person.id, (participantShiftCounts.get(person.id) || 0) + 1)
+          }
         }
       }
       
-      const newShift = {
+      const newShift: Shift = {
         id: `shift-${date}`,
         date,
-        participants: shiftParticipants
+        participants: shiftParticipants,
+        isSpecialDay
       }
       
       newShifts.push(newShift)

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { ChartBar, Key, TrendUp, TrendDown, Minus } from '@phosphor-icons/react'
+import { ChartBar, Key, TrendUp, TrendDown, Minus, Star } from '@phosphor-icons/react'
 import { Participant, Shift } from '@/lib/types'
 import { motion } from 'framer-motion'
 
@@ -19,11 +19,14 @@ interface ParticipantStats {
   shiftsCount: number
   historicalCount: number
   totalCount: number
+  specialDaysCount: number
   percentage: number
 }
 
 export function StatsCard({ participants, schedule, historicalShifts = [] }: StatsCardProps) {
   const calculateStats = (): ParticipantStats[] => {
+    const allShifts = [...schedule, ...historicalShifts]
+    
     const stats = participants.map(participant => {
       const shiftsCount = schedule.filter(shift => 
         shift.participants.includes(participant.id)
@@ -31,6 +34,10 @@ export function StatsCard({ participants, schedule, historicalShifts = [] }: Sta
 
       const historicalCount = historicalShifts.filter(shift => 
         shift.participants.includes(participant.id)
+      ).length
+      
+      const specialDaysCount = allShifts.filter(shift =>
+        shift.isSpecialDay && shift.participants.includes(participant.id)
       ).length
 
       const totalCount = shiftsCount + historicalCount
@@ -43,6 +50,7 @@ export function StatsCard({ participants, schedule, historicalShifts = [] }: Sta
         shiftsCount,
         historicalCount,
         totalCount,
+        specialDaysCount,
         percentage: schedule.length > 0 ? (shiftsCount / schedule.length) * 100 : 0
       }
     })
@@ -119,6 +127,11 @@ export function StatsCard({ participants, schedule, historicalShifts = [] }: Sta
                     {stat.hasKeys && (
                       <Badge variant="default" className="bg-accent text-accent-foreground h-4 px-1 text-[10px] gap-0.5">
                         <Key size={9} />K
+                      </Badge>
+                    )}
+                    {stat.specialDaysCount > 0 && (
+                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300 h-4 px-1 text-[10px] gap-0.5">
+                        <Star size={9} weight="fill" />{stat.specialDaysCount}
                       </Badge>
                     )}
                   </div>
