@@ -27,16 +27,18 @@ Aplikacja do inteligentnego planowania i optymalizacji dyżurów w grupie, zapew
 - **Success criteria**: Parametry są zapisane, aplikacja pokazuje przewidywaną liczbę dyżurów na podstawie ustawień
 
 ### Generator Harmonogramu
-- **Functionality**: Algorytm generujący optymalny harmonogram dyżurów z uwzględnieniem wszystkich ograniczeń
-- **Purpose**: Automatyczne stworzenie sprawiedliwego rozkładu dyżurów
-- **Trigger**: Kliknięcie przycisku "Generuj harmonogram"
-- **Progression**: Klik → Walidacja danych → Uruchomienie algorytmu → Wyświetlenie wygenerowanego harmonogramu w formie tabeli/kalendarza → Toast z potwierdzeniem
+- **Functionality**: Algorytm generujący optymalny harmonogram dyżurów z uwzględnieniem wszystkich ograniczeń. System analizuje istniejące dyżury i dodaje tylko brakujące pozycje, zachowując logikę powtarzalności i optymalizacji.
+- **Purpose**: Automatyczne uzupełnianie harmonogramu o nowe dyżury bez nadpisywania istniejących pozycji
+- **Trigger**: Kliknięcie przycisku "Generuj harmonogram" lub "Uzupełnij harmonogram"
+- **Progression**: Klik → Walidacja danych → Analiza istniejących dyżurów → Identyfikacja brakujących dat → Uruchomienie algorytmu dla nowych pozycji → Wyświetlenie uzupełnionego harmonogramu → Toast informujący o liczbie dodanych dyżurów
 - **Success criteria**: 
-  - Każdy dyżur ma wymaganą liczbę osób
+  - Istniejące dyżury pozostają niezmienione
+  - Każdy nowy dyżur ma wymaganą liczbę osób
   - Co najmniej jedna osoba specjalna jest na każdym dyżurze
-  - Odstępy między dyżurami tej samej osoby są maksymalizowane
-  - Składy dyżurów są zróżnicowane (minimalizacja powtórzeń)
+  - Odstępy między dyżurami uwzględniają zarówno historyczne, jak i nowo wygenerowane dyżury
+  - Składy dyżurów są zróżnicowane z uwzględnieniem całej historii
   - Harmonogram jest zapisany w KV store
+  - Użytkownik otrzymuje informację o liczbie dodanych pozycji
 
 ### Eksport i Import JSON
 - **Functionality**: Możliwość zapisu całej konfiguracji (uczestnicy + ustawienia + harmonogram) do pliku JSON oraz wczytania z pliku

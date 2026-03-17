@@ -94,9 +94,10 @@ function scoreSchedule(schedule: Shift[], participants: Participant[]): number {
 export function generateSchedule(
   participants: Participant[],
   settings: ShiftSettings,
-  historicalShifts: Shift[] = []
+  historicalShifts: Shift[] = [],
+  existingSchedule: Shift[] = []
 ): Shift[] {
-  const dates = getDaysBetweenDates(settings.startDate, settings.endDate, settings.frequency)
+  const allDates = getDaysBetweenDates(settings.startDate, settings.endDate, settings.frequency)
   const specialPeople = participants.filter(p => p.hasKeys)
   const regularPeople = participants.filter(p => !p.hasKeys)
   
@@ -108,17 +109,28 @@ export function generateSchedule(
     throw new Error('Brak osób z kluczami. Dodaj przynajmniej jedną osobę specjalną.')
   }
   
-  let bestSchedule: Shift[] = []
+  const existingDatesSet = new Set(existingSchedule.map(s => s.date))
+  const existingScheduleMap = new Map(existingSchedule.map(s => [s.date, s]))
+  
+  const missingDates = allDates.filter(date => !existingDatesSet.has(date))
+  
+  if (missingDates.length === 0) {
+    return existingSchedule
+  }
+  
+  const allHistoricalShifts = [...historicalShifts, ...existingSchedule]
+  
+  let bestNewShifts: Shift[] = []
   let bestScore = -Infinity
   
-  const attempts = Math.min(100, dates.length * 10)
+  const attempts = Math.min(100, missingDates.length * 10)
   
   for (let attempt = 0; attempt < attempts; attempt++) {
-    const schedule: Shift[] = []
+    const newShifts: Shift[] = []
     const participantShiftCounts = new Map<string, number>()
     participants.forEach(p => participantShiftCounts.set(p.id, 0))
     
-    historicalShifts.forEach(shift => {
+    allHistoricalShifts.forEach(shift => {
       shift.participants.forEach(participantId => {
         if (participantShiftCounts.has(participantId)) {
           participantShiftCounts.set(participantId, (participantShiftCounts.get(participantId) || 0) + 1)
@@ -126,19 +138,17 @@ export function generateSchedule(
       })
     })
     
-    for (const date of dates) {
+    const combinedSchedule = [...allHistoricalShifts]
+    
+    for (const date of missingDates) {
       const shiftParticipants: string[] = []
+      
+      const recentShifts = combinedSchedule.slice(-5)
       
       const availableSpecial = shuffleArray(
         specialPeople.filter(p => {
-          let lastShiftIndex = -1
-          for (let i = schedule.length - 1; i >= 0; i--) {
-            if (schedule[i].participants.includes(p.id)) {
-              lastShiftIndex = i
-              break
-            }
-          }
-          return lastShiftIndex === -1 || schedule.length - lastShiftIndex >= 2
+          const lastTwoShifts = recentShifts.slice(-2)
+          return !lastTwoShifts.some(shift => shift.participants.includes(p.id))
         })
       ).sort((a, b) => {
         const countA = participantShiftCounts.get(a.id) || 0
@@ -163,14 +173,8 @@ export function generateSchedule(
       
       const availableRegular = shuffleArray(
         regularPeople.filter(p => {
-          let lastShiftIndex = -1
-          for (let i = schedule.length - 1; i >= 0; i--) {
-            if (schedule[i].participants.includes(p.id)) {
-              lastShiftIndex = i
-              break
-            }
-          }
-          return lastShiftIndex === -1 || schedule.length - lastShiftIndex >= 2
+          const lastTwoShifts = recentShifts.slice(-2)
+          return !lastTwoShifts.some(shift => shift.participants.includes(p.id))
         })
       ).sort((a, b) => {
         const countA = participantShiftCounts.get(a.id) || 0
@@ -199,21 +203,28 @@ export function generateSchedule(
         }
       }
       
-      schedule.push({
+      const newShift = {
         id: `shift-${date}`,
         date,
         participants: shiftParticipants
-      })
+      }
+      
+      newShifts.push(newShift)
+      combinedSchedule.push(newShift)
     }
     
-    const score = scoreSchedule(schedule, participants)
+    const score = scoreSchedule(combinedSchedule, participants)
     if (score > bestScore) {
       bestScore = score
-      bestSchedule = schedule
+      bestNewShifts = newShifts
     }
   }
   
-  return bestSchedule
+  const finalSchedule = [...existingSchedule, ...bestNewShifts].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+  
+  return finalSchedule
 }
 
 export function exportToJSON(data: { participants: Participant[], settings: ShiftSettings, schedule: Shift[], historicalShifts?: Shift[] }): void {

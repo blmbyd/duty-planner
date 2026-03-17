@@ -117,9 +117,15 @@ function App() {
     setIsGenerating(true)
     try {
       await new Promise(resolve => setTimeout(resolve, 500))
-      const newSchedule = generateSchedule(participantsList, currentSettings, currentHistoricalShifts)
+      const newSchedule = generateSchedule(participantsList, currentSettings, currentHistoricalShifts, currentSchedule)
+      const addedCount = newSchedule.length - currentSchedule.length
       setSchedule(newSchedule)
-      toast.success(`Wygenerowano harmonogram - ${newSchedule.length} dyżurów`)
+      
+      if (addedCount > 0) {
+        toast.success(`Dodano ${addedCount} nowych dyżurów (łącznie: ${newSchedule.length})`)
+      } else {
+        toast.info('Harmonogram jest już kompletny')
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Błąd generowania harmonogramu')
     } finally {
@@ -186,9 +192,12 @@ function App() {
         setIsGenerating(true)
         setTimeout(async () => {
           try {
-            const newSchedule = generateSchedule(updatedParticipants, currentSettings, currentHistoricalShifts)
+            const newSchedule = generateSchedule(updatedParticipants, currentSettings, currentHistoricalShifts, currentSchedule)
             setSchedule(newSchedule)
-            toast.success(`Automatycznie wygenerowano harmonogram - ${newSchedule.length} dyżurów`)
+            const addedCount = newSchedule.length - currentSchedule.length
+            if (addedCount > 0) {
+              toast.success(`Automatycznie wygenerowano ${addedCount} dyżurów`)
+            }
           } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Błąd generowania harmonogramu')
           } finally {
@@ -468,7 +477,7 @@ function App() {
                         size={16} 
                         className={`mr-2 ${isGenerating ? 'animate-spin' : ''}`} 
                       />
-                      Generuj harmonogram
+                      {currentSchedule.length > 0 ? 'Uzupełnij harmonogram' : 'Generuj harmonogram'}
                     </Button>
                   </div>
                 </div>
