@@ -40,7 +40,7 @@ import { AddParticipantDialog } from '@/components/AddParticipantDialog'
 import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
 import { StatsCard } from '@/components/StatsCard'
 import { Participant, ShiftSettings, Shift, DEFAULT_SETTINGS } from '@/lib/types'
-import { generateSchedule, exportToJSON, importFromJSON } from '@/lib/schedule-generator'
+import { generateSchedule, exportParticipantsToJSON, exportScheduleToJSON, importFromJSON } from '@/lib/schedule-generator'
 import { motion } from 'framer-motion'
 
 function App() {
@@ -133,10 +133,16 @@ function App() {
     }
   }
 
-  const handleExport = () => {
-    exportToJSON({ 
+  const handleExportParticipants = () => {
+    exportParticipantsToJSON({ 
       participants: participantsList, 
-      settings: currentSettings, 
+      settings: currentSettings
+    })
+    toast.success('Uczestnicy i ustawienia wyeksportowane')
+  }
+
+  const handleExportSchedule = () => {
+    exportScheduleToJSON({ 
       schedule: currentSchedule,
       historicalShifts: currentHistoricalShifts 
     })
@@ -416,18 +422,27 @@ function App() {
 
                 <Separator />
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <Button 
-                    className="flex-1" 
+                    className="w-full" 
                     variant="outline"
-                    onClick={handleExport}
+                    onClick={handleExportParticipants}
                     disabled={participantsList.length === 0}
                   >
                     <Download size={16} className="mr-2" />
-                    Eksport
+                    Eksport: Uczestnicy + Ustawienia
                   </Button>
                   <Button 
-                    className="flex-1" 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={handleExportSchedule}
+                    disabled={currentSchedule.length === 0 && currentHistoricalShifts.length === 0}
+                  >
+                    <Download size={16} className="mr-2" />
+                    Eksport: Harmonogram
+                  </Button>
+                  <Button 
+                    className="w-full" 
                     variant="outline"
                     onClick={() => document.getElementById('import-file')?.click()}
                   >
