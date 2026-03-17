@@ -1,61 +1,99 @@
-import { Participant, ShiftSettings, Shift, SpecialDayType } from './types'
+import { Participant, ShiftSettings, Shift, SpecialDay, SpecialDayFrequency } from './types'
 
-function getSpecialDaysInRange(startDate: string, endDate: string, specialDayType: SpecialDayType): string[] {
-  if (specialDayType === 'none') return []
-  
-  const specialDays: string[] = []
-  const start = new Date(startDate)
-  const end = new Date(endDate)
-  
-  let currentMonth = new Date(start.getFullYear(), start.getMonth(), 1)
-  
-  while (currentMonth <= end) {
-    const specialDay = getSpecialDayForMonth(currentMonth, specialDayType)
-    if (specialDay && specialDay >= start && specialDay <= end) {
-      specialDays.push(specialDay.toISOString().split('T')[0])
-    }
-    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
-  }
-  
-  return specialDays
+interface SpecialDayOccurrence {
+  date: string
+  specialDayId: string
+  peopleCount: number
 }
 
-function getSpecialDayForMonth(monthDate: Date, specialDayType: SpecialDayType): Date | null {
-  if (specialDayType === 'none') return null
+function getTargetDayOfWeek(frequency: SpecialDayFrequency): number {
+  if (frequency.includes('monday')) return 1
+  if (frequency.includes('tuesday')) return 2
+  if (frequency.includes('wednesday')) return 3
+  if (frequency.includes('thursday')) return 4
+  if (frequency.includes('friday')) return 5
+  return 1
+}
+
+function getWeekOccurrence(frequency: SpecialDayFrequency): 'first' | 'second' | 'third' | 'fourth' | 'last' {
+  if (frequency.includes('first')) return 'first'
+  if (frequency.includes('second')) return 'second'
+  if (frequency.includes('third')) return 'third'
+  if (frequency.includes('fourth')) return 'fourth'
+  if (frequency.includes('last')) return 'last'
+  return 'first'
+}
+
+function getSpecialDayForMonth(monthDate: Date, frequency: SpecialDayFrequency): Date | null {
+  if (frequency === 'none') return null
   
   const year = monthDate.getFullYear()
   const month = monthDate.getMonth()
+  const targetDayOfWeek = getTargetDayOfWeek(frequency)
+  const weekOccurrence = getWeekOccurrence(frequency)
+  
+  if (weekOccurrence === 'last') {
+    const lastDayOfMonth = new Date(year, month + 1, 0)
+    let lastTargetDay = new Date(lastDayOfMonth)
+    
+    while (lastTargetDay.getDay() !== targetDayOfWeek) {
+      lastTargetDay.setDate(lastTargetDay.getDate() - 1)
+    }
+    
+    return lastTargetDay
+  }
   
   const firstDay = new Date(year, month, 1)
-  const firstMonday = new Date(firstDay)
+  let firstTargetDay = new Date(firstDay)
   
-  while (firstMonday.getDay() !== 1) {
-    firstMonday.setDate(firstMonday.getDate() + 1)
+  while (firstTargetDay.getDay() !== targetDayOfWeek) {
+    firstTargetDay.setDate(firstTargetDay.getDate() + 1)
   }
   
-  switch (specialDayType) {
-    case 'first-monday':
-      return firstMonday
-    case 'second-monday': {
-      const secondMonday = new Date(firstMonday)
-      secondMonday.setDate(secondMonday.getDate() + 7)
-      return secondMonday
-    }
-    case 'third-monday': {
-      const thirdMonday = new Date(firstMonday)
-      thirdMonday.setDate(thirdMonday.getDate() + 14)
-      return thirdMonday
-    }
-    case 'last-monday': {
-      const lastMonday = new Date(year, month + 1, 0)
-      while (lastMonday.getDay() !== 1) {
-        lastMonday.setDate(lastMonday.getDate() - 1)
+  const occurrenceMap = {
+    'first': 0,
+    'second': 7,
+    'third': 14,
+    'fourth': 21
+  }
+  
+  const daysToAdd = occurrenceMap[weekOccurrence]
+  const targetDate = new Date(firstTargetDay)
+  targetDate.setDate(targetDate.getDate() + daysToAdd)
+  
+  if (targetDate.getMonth() !== month) {
+    return null
+  }
+  
+  return targetDate
+}
+
+function getSpecialDaysInRange(startDate: string, endDate: string, specialDays: SpecialDay[]): SpecialDayOccurrence[] {
+  if (!specialDays || specialDays.length === 0) return []
+  
+  const occurrences: SpecialDayOccurrence[] = []
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  
+  for (const specialDay of specialDays) {
+    if (specialDay.frequency === 'none') continue
+    
+    let currentMonth = new Date(start.getFullYear(), start.getMonth(), 1)
+    
+    while (currentMonth <= end) {
+      const date = getSpecialDayForMonth(currentMonth, specialDay.frequency)
+      if (date && date >= start && date <= end) {
+        occurrences.push({
+          date: date.toISOString().split('T')[0],
+          specialDayId: specialDay.id,
+          peopleCount: specialDay.peopleCount
+        })
       }
-      return lastMonday
+      currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
     }
-    default:
-      return null
   }
+  
+  return occurrences
 }
 
 function getDaysBetweenDates(startDate: string, endDate: string, frequency: ShiftSettings['frequency']): string[] {
@@ -156,8 +194,8 @@ export function generateSchedule(
   existingSchedule: Shift[] = []
 ): Shift[] {
   const allDates = getDaysBetweenDates(settings.startDate, settings.endDate, settings.frequency)
-  const specialDays = getSpecialDaysInRange(settings.startDate, settings.endDate, settings.specialDayType)
-  const specialDaysSet = new Set(specialDays)
+  const specialDayOccurrences = getSpecialDaysInRange(settings.startDate, settings.endDate, settings.specialDays)
+  const specialDaysMap = new Map(specialDayOccurrences.map(occ => [occ.date, occ]))
   
   const specialPeople = participants.filter(p => p.hasKeys)
   const regularPeople = participants.filter(p => !p.hasKeys)
@@ -171,9 +209,9 @@ export function generateSchedule(
   }
   
   const existingDatesSet = new Set(existingSchedule.map(s => s.date))
-  const existingScheduleMap = new Map(existingSchedule.map(s => [s.date, s]))
   
-  const allRequiredDates = [...new Set([...allDates, ...specialDays])].sort()
+  const specialDayDates = specialDayOccurrences.map(occ => occ.date)
+  const allRequiredDates = [...new Set([...allDates, ...specialDayDates])].sort()
   const missingDates = allRequiredDates.filter(date => !existingDatesSet.has(date))
   
   if (missingDates.length === 0) {
@@ -190,18 +228,26 @@ export function generateSchedule(
   for (let attempt = 0; attempt < attempts; attempt++) {
     const newShifts: Shift[] = []
     const participantShiftCounts = new Map<string, number>()
-    const participantSpecialDayCounts = new Map<string, number>()
+    const participantSpecialDayCountsPerDay = new Map<string, Map<string, number>>()
+    
     participants.forEach(p => {
       participantShiftCounts.set(p.id, 0)
-      participantSpecialDayCounts.set(p.id, 0)
+    })
+    
+    settings.specialDays.forEach(sd => {
+      participantSpecialDayCountsPerDay.set(sd.id, new Map())
+      participants.forEach(p => {
+        participantSpecialDayCountsPerDay.get(sd.id)!.set(p.id, 0)
+      })
     })
     
     allHistoricalShifts.forEach(shift => {
       shift.participants.forEach(participantId => {
         if (participantShiftCounts.has(participantId)) {
           participantShiftCounts.set(participantId, (participantShiftCounts.get(participantId) || 0) + 1)
-          if (shift.isSpecialDay) {
-            participantSpecialDayCounts.set(participantId, (participantSpecialDayCounts.get(participantId) || 0) + 1)
+          if (shift.specialDayId && participantSpecialDayCountsPerDay.has(shift.specialDayId)) {
+            const counts = participantSpecialDayCountsPerDay.get(shift.specialDayId)!
+            counts.set(participantId, (counts.get(participantId) || 0) + 1)
           }
         }
       })
@@ -210,22 +256,22 @@ export function generateSchedule(
     const combinedSchedule = [...allHistoricalShifts]
     
     for (const date of missingDates) {
-      const isSpecialDay = specialDaysSet.has(date)
-      const peopleCount = isSpecialDay && settings.specialDayPeopleCount 
-        ? settings.specialDayPeopleCount 
-        : settings.peoplePerShift
+      const specialDayOccurrence = specialDaysMap.get(date)
+      const peopleCount = specialDayOccurrence ? specialDayOccurrence.peopleCount : settings.peoplePerShift
       
       const shiftParticipants: string[] = []
       
       const recentShifts = combinedSchedule.slice(-5)
       
-      if (isSpecialDay) {
+      if (specialDayOccurrence) {
+        const specialDayCounts = participantSpecialDayCountsPerDay.get(specialDayOccurrence.specialDayId)!
+        
         const availableForSpecialDay = shuffleArray(participants.filter(p => {
           const lastTwoShifts = recentShifts.slice(-2)
           return !lastTwoShifts.some(shift => shift.participants.includes(p.id))
         })).sort((a, b) => {
-          const specialCountA = participantSpecialDayCounts.get(a.id) || 0
-          const specialCountB = participantSpecialDayCounts.get(b.id) || 0
+          const specialCountA = specialDayCounts.get(a.id) || 0
+          const specialCountB = specialDayCounts.get(b.id) || 0
           if (specialCountA !== specialCountB) {
             return specialCountA - specialCountB
           }
@@ -239,7 +285,7 @@ export function generateSchedule(
           const personWithKeys = availableForSpecialDay.find(p => p.hasKeys)!
           shiftParticipants.push(personWithKeys.id)
           participantShiftCounts.set(personWithKeys.id, (participantShiftCounts.get(personWithKeys.id) || 0) + 1)
-          participantSpecialDayCounts.set(personWithKeys.id, (participantSpecialDayCounts.get(personWithKeys.id) || 0) + 1)
+          specialDayCounts.set(personWithKeys.id, (specialDayCounts.get(personWithKeys.id) || 0) + 1)
         }
         
         for (const person of availableForSpecialDay) {
@@ -247,7 +293,7 @@ export function generateSchedule(
           if (!shiftParticipants.includes(person.id)) {
             shiftParticipants.push(person.id)
             participantShiftCounts.set(person.id, (participantShiftCounts.get(person.id) || 0) + 1)
-            participantSpecialDayCounts.set(person.id, (participantSpecialDayCounts.get(person.id) || 0) + 1)
+            specialDayCounts.set(person.id, (specialDayCounts.get(person.id) || 0) + 1)
           }
         }
         
@@ -255,8 +301,8 @@ export function generateSchedule(
           const fallbackAvailable = shuffleArray(
             participants.filter(p => !shiftParticipants.includes(p.id))
           ).sort((a, b) => {
-            const specialCountA = participantSpecialDayCounts.get(a.id) || 0
-            const specialCountB = participantSpecialDayCounts.get(b.id) || 0
+            const specialCountA = specialDayCounts.get(a.id) || 0
+            const specialCountB = specialDayCounts.get(b.id) || 0
             return specialCountA - specialCountB
           })
           
@@ -264,7 +310,7 @@ export function generateSchedule(
             if (shiftParticipants.length >= peopleCount) break
             shiftParticipants.push(person.id)
             participantShiftCounts.set(person.id, (participantShiftCounts.get(person.id) || 0) + 1)
-            participantSpecialDayCounts.set(person.id, (participantSpecialDayCounts.get(person.id) || 0) + 1)
+            specialDayCounts.set(person.id, (specialDayCounts.get(person.id) || 0) + 1)
           }
         }
       } else {
@@ -331,7 +377,7 @@ export function generateSchedule(
         id: `shift-${date}`,
         date,
         participants: shiftParticipants,
-        isSpecialDay
+        specialDayId: specialDayOccurrence?.specialDayId
       }
       
       newShifts.push(newShift)

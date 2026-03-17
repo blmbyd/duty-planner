@@ -5,15 +5,21 @@ export interface Participant {
   hasKeys: boolean
 }
 
-export type SpecialDayType = 'none' | 'second-monday' | 'first-monday' | 'third-monday' | 'last-monday'
+export type SpecialDayFrequency = 'none' | 'first-monday' | 'second-monday' | 'third-monday' | 'fourth-monday' | 'last-monday' | 'first-tuesday' | 'second-tuesday' | 'third-tuesday' | 'fourth-tuesday' | 'last-tuesday' | 'first-wednesday' | 'second-wednesday' | 'third-wednesday' | 'fourth-wednesday' | 'last-wednesday' | 'first-thursday' | 'second-thursday' | 'third-thursday' | 'fourth-thursday' | 'last-thursday' | 'first-friday' | 'second-friday' | 'third-friday' | 'fourth-friday' | 'last-friday'
+
+export interface SpecialDay {
+  id: string
+  name: string
+  frequency: SpecialDayFrequency
+  peopleCount: number
+}
 
 export interface ShiftSettings {
   frequency: 'daily' | 'every-2-days' | 'every-3-days' | 'weekly'
   peoplePerShift: number
   startDate: string
   endDate: string
-  specialDayType: SpecialDayType
-  specialDayPeopleCount?: number
+  specialDays: SpecialDay[]
 }
 
 export interface Shift {
@@ -21,7 +27,7 @@ export interface Shift {
   date: string
   participants: string[]
   isHistorical?: boolean
-  isSpecialDay?: boolean
+  specialDayId?: string
 }
 
 export interface AppData {
@@ -36,6 +42,5 @@ export const DEFAULT_SETTINGS: ShiftSettings = {
   peoplePerShift: 2,
   startDate: new Date().toISOString().split('T')[0],
   endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-  specialDayType: 'none',
-  specialDayPeopleCount: 2
+  specialDays: []
 }

@@ -37,7 +37,7 @@ export function StatsCard({ participants, schedule, historicalShifts = [] }: Sta
       ).length
       
       const specialDaysCount = allShifts.filter(shift =>
-        shift.isSpecialDay && shift.participants.includes(participant.id)
+        shift.specialDayId && shift.participants.includes(participant.id)
       ).length
 
       const totalCount = shiftsCount + historicalCount

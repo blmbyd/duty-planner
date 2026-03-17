@@ -40,6 +40,7 @@ import {
 import { AddParticipantDialog } from '@/components/AddParticipantDialog'
 import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
 import { StatsCard } from '@/components/StatsCard'
+import { SpecialDaysManager } from '@/components/SpecialDaysManager'
 import { Participant, ShiftSettings, Shift, DEFAULT_SETTINGS } from '@/lib/types'
 import { generateSchedule, exportParticipantsToJSON, exportScheduleToJSON, importFromJSON } from '@/lib/schedule-generator'
 import { motion } from 'framer-motion'
@@ -424,52 +425,6 @@ function App() {
                 <Separator />
 
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="specialDay">Dzień specjalny</Label>
-                  <Select
-                    value={currentSettings.specialDayType || 'none'}
-                    onValueChange={(value) => 
-                      setSettings((current) => ({ 
-                        ...(current || DEFAULT_SETTINGS), 
-                        specialDayType: value as any,
-                        specialDayPeopleCount: current?.specialDayPeopleCount || current?.peoplePerShift || 2
-                      }))
-                    }
-                  >
-                    <SelectTrigger id="specialDay">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Brak</SelectItem>
-                      <SelectItem value="first-monday">Pierwszy poniedziałek miesiąca</SelectItem>
-                      <SelectItem value="second-monday">Drugi poniedziałek miesiąca</SelectItem>
-                      <SelectItem value="third-monday">Trzeci poniedziałek miesiąca</SelectItem>
-                      <SelectItem value="last-monday">Ostatni poniedziałek miesiąca</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {currentSettings.specialDayType && currentSettings.specialDayType !== 'none' && (
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="specialDayPeople">Liczba osób w dniu specjalnym</Label>
-                    <Input
-                      id="specialDayPeople"
-                      type="number"
-                      min="1"
-                      max={participantsList.length || 10}
-                      value={currentSettings.specialDayPeopleCount || currentSettings.peoplePerShift}
-                      onChange={(e) => 
-                        setSettings((current) => ({ 
-                          ...(current || DEFAULT_SETTINGS), 
-                          specialDayPeopleCount: Math.max(1, parseInt(e.target.value) || 1) 
-                        }))
-                      }
-                    />
-                  </div>
-                )}
-
-                <Separator />
-
-                <div className="flex flex-col gap-2">
                   <Button 
                     className="w-full" 
                     variant="outline"
@@ -506,6 +461,12 @@ function App() {
                 </div>
               </CardContent>
             </Card>
+
+            <SpecialDaysManager
+              specialDays={currentSettings.specialDays}
+              onUpdate={(specialDays) => setSettings((current) => ({ ...(current || DEFAULT_SETTINGS), specialDays }))}
+              maxPeoplePerShift={participantsList.length || 10}
+            />
           </div>
 
           <div className="flex-1 flex flex-col gap-6">
@@ -596,10 +557,10 @@ function App() {
                               <TableCell className="font-mono">
                                 <div className="flex items-center gap-2">
                                   {formatDate(shift.date)}
-                                  {shift.isSpecialDay && (
+                                  {shift.specialDayId && (
                                     <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
                                       <Star size={12} weight="fill" className="mr-1" />
-                                      Dzień specjalny
+                                      {currentSettings.specialDays.find(sd => sd.id === shift.specialDayId)?.name || 'Dzień specjalny'}
                                     </Badge>
                                   )}
                                 </div>
