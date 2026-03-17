@@ -44,6 +44,18 @@ export function AddParticipantDialog({
     }
   }, [open, editParticipant])
 
+  const handleSubmit = () => {
+    if (!firstName.trim() || !lastName.trim()) return
+    
+    const participant: Participant = {
+      id: editParticipant?.id || `participant-${Date.now()}`,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      hasKeys
+    }
+    
+    onAdd(participant)
+    onOpenChange(false)
   }
 
   return (
