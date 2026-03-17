@@ -444,15 +444,15 @@ function App() {
                 </div>
               </CardContent>
             </Card>
+          </div>
 
+          <div className="flex-1 flex flex-col gap-6">
             <StatsCard 
               participants={participantsList}
               schedule={currentSchedule}
               historicalShifts={currentHistoricalShifts}
             />
-          </div>
 
-          <div className="flex-1">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
