@@ -93,6 +93,15 @@ function App() {
     toast.success('Przeszły dyżur dodany')
   }
 
+  const handleDeleteShift = (shiftId: string, isHistorical: boolean) => {
+    if (isHistorical) {
+      setHistoricalShifts((current) => (current || []).filter(s => s.id !== shiftId))
+    } else {
+      setSchedule((current) => (current || []).filter(s => s.id !== shiftId))
+    }
+    toast.success('Dyżur usunięty')
+  }
+
   const handleGenerateSchedule = async () => {
     if (participantsList.length < currentSettings.peoplePerShift) {
       toast.error('Za mało uczestników dla wymaganej liczby osób na dyżurze')
@@ -499,6 +508,7 @@ function App() {
                           <TableHead>Data</TableHead>
                           <TableHead>Uczestnicy</TableHead>
                           <TableHead className="w-[120px]">Status</TableHead>
+                          <TableHead className="w-[80px]"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -539,6 +549,15 @@ function App() {
                                 >
                                   {isHistorical ? "Wykonany" : "Zaplanowany"}
                                 </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Button 
+                                  size="icon" 
+                                  variant="ghost"
+                                  onClick={() => handleDeleteShift(shift.id, shift.isHistorical || false)}
+                                >
+                                  <Trash size={16} />
+                                </Button>
                               </TableCell>
                             </TableRow>
                           )
