@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -26,24 +26,24 @@ export function AddParticipantDialog({
   onAdd,
   editParticipant 
 }: AddParticipantDialogProps) {
-  const [firstName, setFirstName] = useState(editParticipant?.firstName || '')
-  const [lastName, setLastName] = useState(editParticipant?.lastName || '')
-  const [hasKeys, setHasKeys] = useState(editParticipant?.hasKeys || false)
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [hasKeys, setHasKeys] = useState(false)
 
-  const handleSubmit = () => {
-    if (!firstName.trim() || !lastName.trim()) return
+  useEffect(() => {
+    if (open) {
+      if (editParticipant) {
+        setFirstName(editParticipant.firstName)
+        setLastName(editParticipant.lastName)
+        setHasKeys(editParticipant.hasKeys)
+      } else {
+        setFirstName('')
+        setLastName('')
+        setHasKeys(false)
+      }
+    }
+  }, [open, editParticipant])
 
-    onAdd({
-      id: editParticipant?.id || `participant-${Date.now()}`,
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      hasKeys,
-    })
-
-    setFirstName('')
-    setLastName('')
-    setHasKeys(false)
-    onOpenChange(false)
   }
 
   return (
