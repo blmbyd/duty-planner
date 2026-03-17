@@ -234,13 +234,10 @@ export function exportParticipantsToJSON(data: { participants: Participant[], se
   const link = document.createElement('a')
   link.href = url
   link.download = `uczestnicy-ustawienia-${new Date().toISOString().split('T')[0]}.json`
-  link.style.display = 'none'
   document.body.appendChild(link)
   link.click()
-  setTimeout(() => {
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, 100)
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 export function exportScheduleToJSON(data: { schedule: Shift[], historicalShifts: Shift[] }): void {
@@ -250,13 +247,10 @@ export function exportScheduleToJSON(data: { schedule: Shift[], historicalShifts
   const link = document.createElement('a')
   link.href = url
   link.download = `harmonogram-dyzurow-${new Date().toISOString().split('T')[0]}.json`
-  link.style.display = 'none'
   document.body.appendChild(link)
   link.click()
-  setTimeout(() => {
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, 100)
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 export function importFromJSON(file: File): Promise<{ participants: Participant[], settings: ShiftSettings, schedule: Shift[], historicalShifts?: Shift[] }> {
