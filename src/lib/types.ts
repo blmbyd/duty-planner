@@ -5,12 +5,14 @@ export interface Participant {
   hasKeys: boolean
 }
 
-export type SpecialDayFrequency = 'none' | 'first-monday' | 'second-monday' | 'third-monday' | 'fourth-monday' | 'last-monday' | 'first-tuesday' | 'second-tuesday' | 'third-tuesday' | 'fourth-tuesday' | 'last-tuesday' | 'first-wednesday' | 'second-wednesday' | 'third-wednesday' | 'fourth-wednesday' | 'last-wednesday' | 'first-thursday' | 'second-thursday' | 'third-thursday' | 'fourth-thursday' | 'last-thursday' | 'first-friday' | 'second-friday' | 'third-friday' | 'fourth-friday' | 'last-friday'
+export type SpecialDayWeekOccurrence = 'first' | 'second' | 'third' | 'fourth' | 'last'
+export type SpecialDayDayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday'
 
 export interface SpecialDay {
   id: string
   name: string
-  frequency: SpecialDayFrequency
+  weekOccurrence: SpecialDayWeekOccurrence
+  dayOfWeek: SpecialDayDayOfWeek
   peopleCount: number
 }
 

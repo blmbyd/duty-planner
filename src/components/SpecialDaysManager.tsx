@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Trash, Plus, Star } from '@phosphor-icons/react'
-import { SpecialDay, SpecialDayFrequency } from '@/lib/types'
+import { SpecialDay, SpecialDayWeekOccurrence, SpecialDayDayOfWeek } from '@/lib/types'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface SpecialDaysManagerProps {
@@ -21,58 +21,60 @@ interface SpecialDaysManagerProps {
   maxPeoplePerShift: number
 }
 
+const weekOccurrenceLabels: Record<SpecialDayWeekOccurrence, string> = {
+  first: '1.',
+  second: '2.',
+  third: '3.',
+  fourth: '4.',
+  last: 'Ostatni(-a)',
+}
+
+const dayOfWeekLabels: Record<SpecialDayDayOfWeek, string> = {
+  monday: 'poniedziałek',
+  tuesday: 'wtorek',
+  wednesday: 'środa',
+  thursday: 'czwartek',
+  friday: 'piątek',
+}
+
+const weekOccurrenceFieldLabel: Record<SpecialDayDayOfWeek, string> = {
+  monday: 'Który poniedziałek miesiąca',
+  tuesday: 'Który wtorek miesiąca',
+  wednesday: 'Która środa miesiąca',
+  thursday: 'Który czwartek miesiąca',
+  friday: 'Który piątek miesiąca',
+}
+
+function buildFrequencyLabel(weekOccurrence: SpecialDayWeekOccurrence, dayOfWeek: SpecialDayDayOfWeek): string {
+  return `${weekOccurrenceLabels[weekOccurrence]} ${dayOfWeekLabels[dayOfWeek]}`
+}
+
 export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }: SpecialDaysManagerProps) {
   const [newDayName, setNewDayName] = useState('')
-  const [newDayFrequency, setNewDayFrequency] = useState<SpecialDayFrequency>('second-monday')
+  const [newDayWeekOccurrence, setNewDayWeekOccurrence] = useState<SpecialDayWeekOccurrence>('second')
+  const [newDayDayOfWeek, setNewDayDayOfWeek] = useState<SpecialDayDayOfWeek>('monday')
   const [newDayPeople, setNewDayPeople] = useState(2)
 
   const handleAdd = () => {
     if (!newDayName.trim()) return
-    
+
     const newSpecialDay: SpecialDay = {
       id: `special-day-${Date.now()}`,
       name: newDayName,
-      frequency: newDayFrequency,
+      weekOccurrence: newDayWeekOccurrence,
+      dayOfWeek: newDayDayOfWeek,
       peopleCount: newDayPeople
     }
-    
+
     onUpdate([...specialDays, newSpecialDay])
     setNewDayName('')
-    setNewDayFrequency('second-monday')
+    setNewDayWeekOccurrence('second')
+    setNewDayDayOfWeek('monday')
     setNewDayPeople(2)
   }
 
   const handleDelete = (id: string) => {
     onUpdate(specialDays.filter(sd => sd.id !== id))
-  }
-
-  const frequencyLabels: Record<SpecialDayFrequency, string> = {
-    'none': 'Brak',
-    'first-monday': '1. poniedziałek',
-    'second-monday': '2. poniedziałek',
-    'third-monday': '3. poniedziałek',
-    'fourth-monday': '4. poniedziałek',
-    'last-monday': 'Ostatni poniedziałek',
-    'first-tuesday': '1. wtorek',
-    'second-tuesday': '2. wtorek',
-    'third-tuesday': '3. wtorek',
-    'fourth-tuesday': '4. wtorek',
-    'last-tuesday': 'Ostatni wtorek',
-    'first-wednesday': '1. środa',
-    'second-wednesday': '2. środa',
-    'third-wednesday': '3. środa',
-    'fourth-wednesday': '4. środa',
-    'last-wednesday': 'Ostatnia środa',
-    'first-thursday': '1. czwartek',
-    'second-thursday': '2. czwartek',
-    'third-thursday': '3. czwartek',
-    'fourth-thursday': '4. czwartek',
-    'last-thursday': 'Ostatni czwartek',
-    'first-friday': '1. piątek',
-    'second-friday': '2. piątek',
-    'third-friday': '3. piątek',
-    'fourth-friday': '4. piątek',
-    'last-friday': 'Ostatni piątek',
   }
 
   return (
@@ -99,7 +101,7 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
                     <div className="font-medium text-card-foreground">{sd.name}</div>
                     <div className="flex gap-2 text-sm text-muted-foreground">
                       <Badge variant="outline" className="text-xs">
-                        {frequencyLabels[sd.frequency]}
+                        {buildFrequencyLabel(sd.weekOccurrence, sd.dayOfWeek)}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
                         {sd.peopleCount} {sd.peopleCount === 1 ? 'osoba' : 'osób'}
@@ -130,43 +132,44 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
             />
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="specialDayFrequency">Częstotliwość</Label>
-            <Select
-              value={newDayFrequency}
-              onValueChange={(value) => setNewDayFrequency(value as SpecialDayFrequency)}
-            >
-              <SelectTrigger id="specialDayFrequency">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="first-monday">Pierwszy poniedziałek miesiąca</SelectItem>
-                <SelectItem value="second-monday">Drugi poniedziałek miesiąca</SelectItem>
-                <SelectItem value="third-monday">Trzeci poniedziałek miesiąca</SelectItem>
-                <SelectItem value="fourth-monday">Czwarty poniedziałek miesiąca</SelectItem>
-                <SelectItem value="last-monday">Ostatni poniedziałek miesiąca</SelectItem>
-                <SelectItem value="first-tuesday">Pierwszy wtorek miesiąca</SelectItem>
-                <SelectItem value="second-tuesday">Drugi wtorek miesiąca</SelectItem>
-                <SelectItem value="third-tuesday">Trzeci wtorek miesiąca</SelectItem>
-                <SelectItem value="fourth-tuesday">Czwarty wtorek miesiąca</SelectItem>
-                <SelectItem value="last-tuesday">Ostatni wtorek miesiąca</SelectItem>
-                <SelectItem value="first-wednesday">Pierwsza środa miesiąca</SelectItem>
-                <SelectItem value="second-wednesday">Druga środa miesiąca</SelectItem>
-                <SelectItem value="third-wednesday">Trzecia środa miesiąca</SelectItem>
-                <SelectItem value="fourth-wednesday">Czwarta środa miesiąca</SelectItem>
-                <SelectItem value="last-wednesday">Ostatnia środa miesiąca</SelectItem>
-                <SelectItem value="first-thursday">Pierwszy czwartek miesiąca</SelectItem>
-                <SelectItem value="second-thursday">Drugi czwartek miesiąca</SelectItem>
-                <SelectItem value="third-thursday">Trzeci czwartek miesiąca</SelectItem>
-                <SelectItem value="fourth-thursday">Czwarty czwartek miesiąca</SelectItem>
-                <SelectItem value="last-thursday">Ostatni czwartek miesiąca</SelectItem>
-                <SelectItem value="first-friday">Pierwszy piątek miesiąca</SelectItem>
-                <SelectItem value="second-friday">Drugi piątek miesiąca</SelectItem>
-                <SelectItem value="third-friday">Trzeci piątek miesiąca</SelectItem>
-                <SelectItem value="fourth-friday">Czwarty piątek miesiąca</SelectItem>
-                <SelectItem value="last-friday">Ostatni piątek miesiąca</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="specialDayWeekOccurrence">{weekOccurrenceFieldLabel[newDayDayOfWeek]}</Label>
+              <Select
+                value={newDayWeekOccurrence}
+                onValueChange={(value) => setNewDayWeekOccurrence(value as SpecialDayWeekOccurrence)}
+              >
+                <SelectTrigger id="specialDayWeekOccurrence">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="first">1.</SelectItem>
+                  <SelectItem value="second">2.</SelectItem>
+                  <SelectItem value="third">3.</SelectItem>
+                  <SelectItem value="fourth">4.</SelectItem>
+                  <SelectItem value="last">Ostatni(-a)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="specialDayDayOfWeek">Dzień tygodnia</Label>
+              <Select
+                value={newDayDayOfWeek}
+                onValueChange={(value) => setNewDayDayOfWeek(value as SpecialDayDayOfWeek)}
+              >
+                <SelectTrigger id="specialDayDayOfWeek">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monday">Poniedziałek</SelectItem>
+                  <SelectItem value="tuesday">Wtorek</SelectItem>
+                  <SelectItem value="wednesday">Środa</SelectItem>
+                  <SelectItem value="thursday">Czwartek</SelectItem>
+                  <SelectItem value="friday">Piątek</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -190,3 +193,4 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
     </Card>
   )
 }
+

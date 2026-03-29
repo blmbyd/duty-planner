@@ -1,4 +1,4 @@
-import { SpecialDay, SpecialDayFrequency } from '../types'
+import { SpecialDay, SpecialDayDayOfWeek, SpecialDayWeekOccurrence } from '../types'
 
 export interface SpecialDayOccurrence {
   date: string
@@ -6,36 +6,22 @@ export interface SpecialDayOccurrence {
   peopleCount: number
 }
 
-function getTargetDayOfWeek(frequency: SpecialDayFrequency): number {
-  if (frequency.includes('monday')) return 1
-  if (frequency.includes('tuesday')) return 2
-  if (frequency.includes('wednesday')) return 3
-  if (frequency.includes('thursday')) return 4
-  if (frequency.includes('friday')) return 5
-  return 1
-}
-
-function getWeekOccurrence(
-  frequency: SpecialDayFrequency
-): 'first' | 'second' | 'third' | 'fourth' | 'last' {
-  if (frequency.includes('first')) return 'first'
-  if (frequency.includes('second')) return 'second'
-  if (frequency.includes('third')) return 'third'
-  if (frequency.includes('fourth')) return 'fourth'
-  if (frequency.includes('last')) return 'last'
-  return 'first'
+const dayOfWeekIndex: Record<SpecialDayDayOfWeek, number> = {
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
 }
 
 export function getSpecialDayForMonth(
   monthDate: Date,
-  frequency: SpecialDayFrequency
+  weekOccurrence: SpecialDayWeekOccurrence,
+  dayOfWeek: SpecialDayDayOfWeek
 ): Date | null {
-  if (frequency === 'none') return null
-
   const year = monthDate.getFullYear()
   const month = monthDate.getMonth()
-  const targetDayOfWeek = getTargetDayOfWeek(frequency)
-  const weekOccurrence = getWeekOccurrence(frequency)
+  const targetDayOfWeek = dayOfWeekIndex[dayOfWeek]
 
   if (weekOccurrence === 'last') {
     const lastDayOfMonth = new Date(year, month + 1, 0)
@@ -55,16 +41,15 @@ export function getSpecialDayForMonth(
     firstTargetDay.setDate(firstTargetDay.getDate() + 1)
   }
 
-  const occurrenceMap: Record<string, number> = {
+  const occurrenceOffset: Record<Exclude<SpecialDayWeekOccurrence, 'last'>, number> = {
     first: 0,
     second: 7,
     third: 14,
     fourth: 21,
   }
 
-  const daysToAdd = occurrenceMap[weekOccurrence]
   const targetDate = new Date(firstTargetDay)
-  targetDate.setDate(targetDate.getDate() + daysToAdd)
+  targetDate.setDate(targetDate.getDate() + occurrenceOffset[weekOccurrence])
 
   if (targetDate.getMonth() !== month) {
     return null
@@ -85,12 +70,10 @@ export function getSpecialDaysInRange(
   const end = new Date(endDate)
 
   for (const specialDay of specialDays) {
-    if (specialDay.frequency === 'none') continue
-
     let currentMonth = new Date(start.getFullYear(), start.getMonth(), 1)
 
     while (currentMonth <= end) {
-      const date = getSpecialDayForMonth(currentMonth, specialDay.frequency)
+      const date = getSpecialDayForMonth(currentMonth, specialDay.weekOccurrence, specialDay.dayOfWeek)
       if (date && date >= start && date <= end) {
         occurrences.push({
           date: date.toISOString().split('T')[0],
