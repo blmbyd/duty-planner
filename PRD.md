@@ -1,162 +1,209 @@
-# Planning Guide
+# Dokument Wymagań Produktowych
 
-Aplikacja do inteligentnego planowania i optymalizacji dyżurów w grupie, zapewniająca równomierne rozłożenie obowiązków, maksymalizację odstępów między dyżurami oraz promowanie interakcji między wszystkimi uczestnikami.
+## Nazwa produktu
 
-**Experience Qualities**:
-1. **Zorganizowana** - Aplikacja prowadzi użytkownika przez logiczny proces: najpierw definicja uczestników, potem ustawienia, na końcu generowanie harmonogramu
-2. **Przejrzysta** - Wszystkie parametry i wygenerowane wyniki są jasno przedstawione, z wizualnymi wskazówkami dotyczącymi statusu uczestników
-3. **Inteligentna** - Algorytm optymalizacyjny automatycznie dba o sprawiedliwe rozłożenie dyżurów i różnorodność zespołów
+Duty Planner
 
-**Complexity Level**: Light Application (multiple features with basic state)
-- Aplikacja ma kilka odrębnych funkcji (zarządzanie uczestnikami, konfiguracja parametrów, generowanie harmonogramu, eksport/import), ale operuje na stosunkowo prostej strukturze danych z perzystencją w KV store
+## Podsumowanie produktu
 
-## Essential Features
+Duty Planner to aplikacja local-first do planowania powtarzalnych dyżurów w sposób sprawiedliwy i przejrzysty. Produkt pomaga zarządzać uczestnikami, zapewnić obecność osób z kluczami, zachować kontekst historycznych dyżurów i generować nowe wpisy harmonogramu bez nadpisywania tego, co zostało już zaplanowane.
 
-### Zarządzanie Uczestnikami
-- **Functionality**: Dodawanie, edycja i usuwanie uczestników dyżurów z możliwością oznaczenia jako "osoba specjalna" (posiadacz kluczy)
-- **Purpose**: Definiuje pulę osób dostępnych do dyżurów oraz identyfikuje kluczowe osoby, które muszą być zawsze obecne
-- **Trigger**: Użytkownik klika "Dodaj uczestnika" lub edytuje istniejącego
-- **Progression**: Klik na przycisk → Dialog z formularzem → Wprowadzenie imienia i nazwiska → Opcjonalne zaznaczenie "Posiada klucze" → Zapisanie → Pojawienie się na liście uczestników
-- **Success criteria**: Lista uczestników jest zapisana w KV store, widoczna na ekranie, z wizualnymi wskaźnikami dla osób specjalnych
+Produkt jest przeznaczony dla małych i średnich zespołów wewnętrznych, które potrzebują szybkiego procesu planowania bez wprowadzania backendu, kont użytkowników i dodatkowej infrastruktury operacyjnej.
 
-### Konfiguracja Parametrów Dyżurów
-- **Functionality**: Ustawienie częstotliwości dyżurów (codziennie/co 2 dni/co 3 dni/raz w tygodniu), liczby osób na dyżurze, zakresu dat
-- **Purpose**: Dostosowanie systemu do specyficznych potrzeb organizacyjnych
-- **Trigger**: Użytkownik wypełnia formularz konfiguracyjny
-- **Progression**: Wybór częstotliwości z dropdown → Ustawienie liczby osób na dyżurze (slider/input) → Wybór daty początkowej i końcowej → Automatyczna walidacja
-- **Success criteria**: Parametry są zapisane, aplikacja pokazuje przewidywaną liczbę dyżurów na podstawie ustawień
+## Problem do rozwiązania
 
-### Generator Harmonogramu
-- **Functionality**: Algorytm generujący optymalny harmonogram dyżurów z uwzględnieniem wszystkich ograniczeń. System analizuje istniejące dyżury i dodaje tylko brakujące pozycje, zachowując logikę powtarzalności i optymalizacji.
-- **Purpose**: Automatyczne uzupełnianie harmonogramu o nowe dyżury bez nadpisywania istniejących pozycji
-- **Trigger**: Kliknięcie przycisku "Generuj harmonogram" lub "Uzupełnij harmonogram"
-- **Progression**: Klik → Walidacja danych → Analiza istniejących dyżurów → Identyfikacja brakujących dat → Uruchomienie algorytmu dla nowych pozycji → Wyświetlenie uzupełnionego harmonogramu → Toast informujący o liczbie dodanych dyżurów
-- **Success criteria**: 
-  - Istniejące dyżury pozostają niezmienione
-  - Każdy nowy dyżur ma wymaganą liczbę osób
-  - Co najmniej jedna osoba specjalna jest na każdym dyżurze
-  - Odstępy między dyżurami uwzględniają zarówno historyczne, jak i nowo wygenerowane dyżury
-  - Składy dyżurów są zróżnicowane z uwzględnieniem całej historii
-  - Harmonogram jest zapisany w KV store
-  - Użytkownik otrzymuje informację o liczbie dodanych pozycji
+Zespoły dzielące między sobą cykliczne obowiązki często zarządzają przydziałami ręcznie w arkuszach lub w komunikatorach. Powoduje to trzy powtarzalne problemy:
 
-### Eksport i Import JSON
-- **Functionality**: Możliwość zapisu całej konfiguracji (uczestnicy + ustawienia + harmonogram) do pliku JSON oraz wczytania z pliku
-- **Purpose**: Persystencja danych poza aplikacją, możliwość archiwizacji i udostępniania
-- **Trigger**: Kliknięcie "Eksportuj do JSON" lub "Importuj z JSON"
-- **Progression Export**: Klik → Pobranie pliku JSON z nazwą zawierającą datę → Toast z potwierdzeniem
-- **Progression Import**: Klik → Wybór pliku → Parsowanie JSON → Walidacja → Załadowanie danych → Toast z potwierdzeniem lub błędem
-- **Success criteria**: Plik JSON zawiera wszystkie dane, import przywraca stan aplikacji identyczny do stanu przed eksportem
+- obciążenie z czasem przesuwa się na te same osoby,
+- łatwo pominąć osoby posiadające klucze,
+- rozszerzanie istniejącego harmonogramu jest żmudne i podatne na błędy.
 
-### Podgląd Harmonogramu
-- **Functionality**: Wizualizacja wygenerowanego harmonogramu w formacie tabeli z datami, uczestnikami i wskaźnikami
-- **Purpose**: Czytelna prezentacja wyników dla użytkownika
-- **Trigger**: Po wygenerowaniu harmonogramu
-- **Progression**: Automatyczne wyświetlenie → Możliwość scrollowania → Wyróżnienie osób specjalnych
-- **Success criteria**: Każdy dyżur jest wyraźnie wyświetlony z datą i listą uczestników
+Produkt ma ograniczyć ręczną koordynację i zapewnić powtarzalny, zrozumiały proces planowania.
 
-## Edge Case Handling
+## Cele
 
-- **Za mało uczestników**: Jeśli liczba uczestników jest mniejsza niż wymagana liczba osób na dyżurze, wyświetl ostrzeżenie i zablokuj generowanie
-- **Brak osób specjalnych**: Jeśli nie ma żadnej osoby oznaczonej jako specjalna, ale algorytm wymaga jej obecności, wyświetl ostrzeżenie z sugestią dodania osoby specjalnej
-- **Za krótki okres**: Jeśli zakres dat jest zbyt krótki na choć jeden dyżur, wyświetl komunikat z minimalnym wymaganym okresem
-- **Nieprawidłowy JSON**: Podczas importu waliduj strukturę i wyświetl szczegółowy komunikat błędu, jeśli dane są nieprawidłowe
-- **Niemożliwa optymalizacja**: Jeśli parametry uniemożliwiają stworzenie harmonogramu (np. 10 dyżurów, 2 osoby specjalne, 3 osoby na dyżur), poinformuj użytkownika o konflikcie
-- **Pusta lista uczestników**: Zablokuj przycisk generowania i wyświetl komunikat o konieczności dodania uczestników
+- Szybko tworzyć harmonogramy dyżurów na podstawie niewielkiego zestawu danych wejściowych.
+- Utrzymywać możliwie wyrównany rozkład przydziałów w zespole.
+- Gwarantować obecność osoby z kluczami na zwykłych dyżurach.
+- Zachowywać kontekst historyczny, aby sprawiedliwość przydziału nie zaczynała się od zera przy każdym nowym okresie planowania.
+- Pozwalać użytkownikowi rozszerzać istniejący harmonogram zamiast generować go od nowa.
+- Zachowywać pełną przenośność danych przez import i eksport.
 
-## Design Direction
+## Poza zakresem
 
-Aplikacja powinna być profesjonalna, zorganizowana i wzbudzać zaufanie - użytkownicy polegają na niej w kwestii sprawiedliwego podziału obowiązków. Design powinien być funkcjonalny, z wyraźną hierarchią informacji i stonowaną paletą kolorów sugerującą kompetencję i rzetelność.
+- Współpraca wielu użytkowników
+- Uwierzytelnianie i uprawnienia
+- Synchronizacja z chmurą
+- Przechowywanie danych po stronie serwera
+- Ręczna edycja harmonogramu metodą przeciągnij i upuść
+- Zaawansowane zarządzanie urlopami lub dostępnością
 
-## Color Selection
+## Użytkownicy docelowi
 
-Paleta kolorów inspirowana profesjonalnymi narzędziami do zarządzania projektami, z akcentem na niebieski (zaufanie, organizacja) i zielony (sukces, optymalizacja).
+- Zespoły biurowe rotujące obowiązki wsparcia lub utrzymania
+- Grupy współdzielące obowiązki w mieszkaniu, akademiku lub wspólnej przestrzeni
+- Małe organizacje potrzebujące lekkiego narzędzia do planowania rotacyjnego
 
-- **Primary Color**: Głęboki niebieski `oklch(0.45 0.15 250)` - reprezentuje profesjonalizm, strukturę i zaufanie do systemu
-- **Secondary Colors**: 
-  - Jasny szary `oklch(0.96 0.005 250)` dla tła sekcji
-  - Ciemny szary `oklch(0.35 0.01 250)` dla tekstu
-- **Accent Color**: Żywy zielony `oklch(0.65 0.18 145)` dla wskaźników sukcesu, osób specjalnych i akcji generowania
-- **Foreground/Background Pairings**: 
-  - Background (Jasny białawy #FAFAFA): Ciemny tekst (#2C2C2E) - Ratio 14.2:1 ✓
-  - Primary (Niebieski #2563EB): Biały tekst (#FFFFFF) - Ratio 6.1:1 ✓
-  - Accent (Zielony #10B981): Biały tekst (#FFFFFF) - Ratio 4.8:1 ✓
-  - Card (Biały #FFFFFF): Ciemny tekst (#2C2C2E) - Ratio 15.1:1 ✓
+## Zasady produktowe
 
-## Font Selection
+1. Zorganizowanie: przebieg pracy powinien prowadzić od uczestników przez ustawienia do generowania harmonogramu bez zbędnej niejednoznaczności.
+2. Przejrzystość: użytkownik powinien rozumieć, dlaczego generowanie jest zablokowane i od jakich danych zależy wynik.
+3. Pragmatyzm: aplikacja ma dostarczać szybko użyteczny rezultat zamiast rozbudowanego interfejsu optymalizacji.
+4. Bezpieczne rozszerzanie: ponowne generowanie powinno uzupełniać luki, a nie niszczyć już wykonaną pracę planistyczną.
 
-Nowoczesny, czytelny typeface z charakterem technicznym, podkreślający precyzję i organizację systemu - **IBM Plex Sans** dla interfejsu i **JetBrains Mono** dla danych liczbowych i dat.
+## Wymagania funkcjonalne
 
-- **Typographic Hierarchy**:
-  - H1 (Tytuł aplikacji): IBM Plex Sans Bold / 32px / tight letter-spacing
-  - H2 (Nagłówki sekcji): IBM Plex Sans Semibold / 24px / normal letter-spacing
-  - H3 (Tytuły kart): IBM Plex Sans Medium / 18px / normal letter-spacing
-  - Body (Tekst główny): IBM Plex Sans Regular / 16px / line-height 1.6
-  - Labels: IBM Plex Sans Medium / 14px / slight letter-spacing
-  - Data/Numbers: JetBrains Mono Regular / 14px / tabular-nums
+### 1. Zarządzanie uczestnikami
 
-## Animations
+Użytkownik musi móc:
 
-Animacje powinny wspierać poczucie responsywności i "inteligencji" aplikacji - subtelne przejścia między stanami, delikatne animacje podczas generowania harmonogramu (sugerujące "pracę" algorytmu) oraz satysfakcjonujące potwierdzenia akcji.
+- dodać uczestnika z imieniem, nazwiskiem i statusem posiadacza kluczy,
+- edytować istniejącego uczestnika,
+- usunąć uczestnika,
+- uzupełnić aplikację przykładowymi uczestnikami do szybkiego testowania.
 
-- Przejścia między krokami: 300ms ease-out
-- Pojawianie się elementów listy: staggered fade-in (50ms delay między elementami)
-- Generowanie harmonogramu: pulsująca animacja przycisku + progress indicator
-- Toast notifications: slide-in z prawej strony z gentle bounce
-- Hover states: 150ms color/scale transitions
+Kryteria akceptacji:
 
-## Component Selection
+- Dane uczestników są zapisywane lokalnie w przeglądarce.
+- Interfejs wyraźnie odróżnia posiadaczy kluczy od pozostałych uczestników.
+- Przy pustej liście uczestników pokazywana jest wskazówka, jaki powinien być następny krok.
 
-- **Components**:
-  - `Card` dla sekcji uczestników, ustawień i harmonogramu
-  - `Dialog` dla dodawania/edycji uczestników
-  - `Button` z wariantami (default, outline, ghost, destructive)
-  - `Input` i `Label` dla formularzy
-  - `Select` dla częstotliwości dyżurów
-  - `Slider` dla liczby osób na dyżurze
-  - `Switch` dla oznaczania osób specjalnych
-  - `Table` dla wyświetlania harmonogramu
-  - `Badge` dla statusów (osoba specjalna, liczba dyżurów)
-  - `Calendar` dla wyboru zakresu dat
-  - `ScrollArea` dla długich list
-  - `Sonner` toast dla powiadomień
-  - `Separator` dla wizualnego podziału sekcji
+### 2. Ustawienia dyżurów
 
-- **Customizations**:
-  - Niestandardowy komponent `ParticipantCard` łączący avatar, imię i nazwisko, badge dla osoby specjalnej
-  - `ScheduleTimeline` - wizualizacja harmonogramu z kolorowymi wskaźnikami
-  - `StatCard` - podsumowanie statystyk (liczba dyżurów, średni odstęp)
+Użytkownik musi móc skonfigurować:
 
-- **States**:
-  - Przyciski mają wyraźny hover (scale 1.02) i active state (scale 0.98)
-  - Input fields z focus ring w kolorze primary
-  - Disabled state dla przycisków gdy dane są niepełne
-  - Loading state podczas generowania harmonogramu
-  - Empty state dla pustej listy uczestników i harmonogramu
+- częstotliwość dyżurów: codziennie, co 2 dni, co 3 dni, raz w tygodniu,
+- liczbę osób na dyżurze,
+- datę początkową,
+- datę końcową.
 
-- **Icon Selection**:
-  - `Users` - dla sekcji uczestników
-  - `CalendarDots` - dla harmonogramu
-  - `Gear` - dla ustawień
-  - `Download/Upload` - dla eksportu/importu
-  - `Plus` - dodawanie uczestnika
-  - `Key` - osoba specjalna
-  - `ArrowsClockwise` - generowanie harmonogramu
-  - `Check` - potwierdzenia
-  - `Warning` - ostrzeżenia
+Kryteria akceptacji:
 
-- **Spacing**:
-  - Sekcje główne: `gap-8` (32px)
-  - Wewnątrz kart: `gap-6` (24px)
-  - Elementy formularza: `gap-4` (16px)
-  - Listy: `gap-3` (12px)
-  - Padding kart: `p-6` (24px)
-  - Padding przycisków: `px-6 py-3`
+- Ustawienia są zapisywane lokalnie.
+- Liczba osób na dyżurze nie może spaść poniżej 1.
+- Generowanie jest blokowane, jeśli pula uczestników jest mniejsza niż wymagana liczebność dyżuru.
 
-- **Mobile**:
-  - Układ stackowany (kolumny zamiast rzędów)
-  - Harmonogram jako karty zamiast tabeli
-  - Bottom sheet zamiast dialogów
-  - Większe touch targets (min 44px)
-  - Sticky header z tytułem i akcjami
-  - Redukcja padding na mniejszych ekranach (`p-4` zamiast `p-6`)
+### 3. Dni specjalne
+
+Użytkownik musi móc definiować cykliczne dni specjalne w skali miesiąca z określeniem:
+
+- nazwy,
+- wystąpienia dnia tygodnia w miesiącu: pierwszy, drugi, trzeci, czwarty, ostatni,
+- dnia tygodnia: od poniedziałku do piątku,
+- wymaganej liczby osób.
+
+Kryteria akceptacji:
+
+- Dni specjalne są przechowywane jako część ustawień.
+- Wystąpienia dni specjalnych mieszczące się w wybranym zakresie dat są uwzględniane w zbiorze wymaganych dat harmonogramu.
+- Dni specjalne mogą wymagać innej liczby osób niż zwykłe dyżury.
+
+### 4. Historyczne dyżury
+
+Użytkownik musi móc dodawać i usuwać historyczne dyżury.
+
+Kryteria akceptacji:
+
+- Historyczne dyżury wpływają na sprawiedliwość przyszłego generowania harmonogramu.
+- Historyczne dyżury są wizualnie odróżnione od nadchodzących dyżurów planowanych.
+- Dane historyczne są uwzględniane w eksporcie i imporcie.
+
+### 5. Generowanie harmonogramu
+
+Generator musi:
+
+- sprawdzać, czy liczba uczestników jest wystarczająca,
+- sprawdzać, czy istnieje co najmniej jedna osoba z kluczami,
+- wyliczać wszystkie wymagane daty na podstawie bazowej częstotliwości i skonfigurowanych dni specjalnych,
+- zachowywać wcześniej wygenerowane wpisy harmonogramu,
+- dodawać wyłącznie brakujące dyżury,
+- zwracać kompletny, uporządkowany harmonogram dla zadanego okresu.
+
+Wymagania behawioralne:
+
+- Zwykły dyżur powinien zawierać co najmniej jedną osobę z kluczami.
+- Dobór kandydatów powinien preferować osoby z mniejszą łączną liczbą przydziałów.
+- Osoby przydzielone niedawno powinny być obniżane priorytetowo, jeśli istnieją alternatywy.
+- Dyżury historyczne i już zaplanowane powinny wpływać na wynik oceny harmonogramu.
+- Generator powinien próbować wielu wariantów harmonogramu i zachowywać najlepszy dostępny wynik.
+
+Kryteria akceptacji:
+
+- Istniejące wpisy harmonogramu pozostają niezmienione po ponownym generowaniu.
+- Nowe dyżury są dodawane wyłącznie dla brakujących dat.
+- Wynikowy harmonogram jest posortowany chronologicznie.
+- Użytkownik otrzymuje po generowaniu komunikat sukcesu, informacji albo błędu.
+
+### 6. Przegląd harmonogramu
+
+Użytkownik musi móc przeglądać połączoną listę dyżurów historycznych i planowanych.
+
+Kryteria akceptacji:
+
+- Każdy dyżur pokazuje datę, uczestników i status.
+- Dni specjalne są oznaczane w harmonogramie.
+- Użytkownik może usuwać pojedyncze dyżury z listy.
+
+### 7. Statystyki
+
+Produkt powinien dostarczać lekkie statystyki na poziomie uczestnika.
+
+Kryteria akceptacji:
+
+- Interfejs pokazuje łączną liczbę przydziałów dla każdego uczestnika.
+- Do sum są wliczane zarówno dyżury historyczne, jak i planowane.
+- Widoczny jest udział w dniach specjalnych.
+
+### 8. Import i eksport kopii zapasowej
+
+Użytkownik musi móc eksportować i importować pełny stan aplikacji jako JSON.
+
+Kryteria akceptacji:
+
+- Eksport zawiera uczestników, ustawienia, harmonogram i historyczne dyżury.
+- Import obsługuje zarówno aktualny opakowany format kopii zapasowej, jak i zwykły obiekt danych dla zgodności.
+- Niepoprawny JSON albo nieprawidłowa struktura zwraca czytelny komunikat błędu.
+- Import całkowicie zastępuje bieżące dane lokalne.
+
+## Główny przepływ użytkownika
+
+1. Użytkownik otwiera aplikację.
+2. Użytkownik dodaje uczestników i oznacza osoby z kluczami.
+3. Użytkownik ustawia częstotliwość, liczebność dyżuru i zakres dat.
+4. Użytkownik opcjonalnie dodaje dni specjalne.
+5. Użytkownik opcjonalnie dodaje historyczne dyżury.
+6. Użytkownik generuje harmonogram.
+7. Użytkownik przegląda wynikowe przydziały i statystyki.
+8. Użytkownik eksportuje dane, jeśli chce zachować przenośną kopię zapasową.
+
+## Przypadki brzegowe
+
+- Zbyt mała liczba uczestników względem wymaganej liczby osób na dyżurze
+- Brak osoby z kluczami w puli uczestników
+- Brak brakujących dat przy ponownym generowaniu
+- Niepoprawny JSON podczas importu
+- Importowany plik bez wymaganych pól najwyższego poziomu
+- Wystąpienia dni specjalnych wypadające poza wybranym zakresem dat
+- Usunięcie uczestnika pozostawiające w zapisanych lub importowanych dyżurach nierozpoznane identyfikatory
+
+## Wymagania UX
+
+- Aplikacja powinna pozostać zrozumiała na jednym ekranie z dwoma głównymi kolumnami na większych wyświetlaczach.
+- Puste stany powinny wyjaśniać następne sensowne działanie użytkownika.
+- Blokujące walidacje powinny być pokazywane natychmiast przez komunikaty toast.
+- Generowanie powinno mieć widoczny stan ładowania.
+- Dyżury historyczne i planowane powinny być łatwe do rozróżnienia na pierwszy rzut oka.
+
+## Ograniczenia techniczne
+
+- Implementacja wyłącznie frontendowa
+- Browser local storage jako domyślna warstwa trwałości danych
+- Kopia zapasowa JSON jako mechanizm przenoszenia danych
+- Kod oparty na React, TypeScript i środowisku deweloperskim Vite
+
+## Metryki sukcesu
+
+- Nowy użytkownik może wygenerować poprawny harmonogram bez dodatkowej instrukcji w czasie krótszym niż 5 minut.
+- Ponowne generowanie zachowuje istniejące dyżury i uzupełnia tylko luki.
+- Użytkownik może odtworzyć wcześniej wyeksportowany stan bez ręcznych poprawek.
+- Rozkład przydziałów pozostaje wizualnie wyrównany dla typowych rozmiarów zespołu.
