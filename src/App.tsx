@@ -58,7 +58,11 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false)
 
   const participantsList = participants || []
-  const currentSettings = settings || DEFAULT_SETTINGS
+  const currentSettings = {
+    ...DEFAULT_SETTINGS,
+    ...(settings || {}),
+    specialDays: (settings?.specialDays || [])
+  }
   const currentSchedule = schedule || []
   const currentHistoricalShifts = historicalShifts || []
 
@@ -466,7 +470,7 @@ function App() {
             </Card>
 
             <SpecialDaysManager
-              specialDays={currentSettings.specialDays}
+              specialDays={currentSettings.specialDays || []}
               onUpdate={(specialDays) => setSettings((current) => ({ ...(current || DEFAULT_SETTINGS), specialDays }))}
               maxPeoplePerShift={participantsList.length || 10}
             />

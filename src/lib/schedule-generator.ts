@@ -69,7 +69,7 @@ function getSpecialDayForMonth(monthDate: Date, frequency: SpecialDayFrequency):
 }
 
 function getSpecialDaysInRange(startDate: string, endDate: string, specialDays: SpecialDay[]): SpecialDayOccurrence[] {
-  if (!specialDays || specialDays.length === 0) return []
+  if (!specialDays || !Array.isArray(specialDays) || specialDays.length === 0) return []
   
   const occurrences: SpecialDayOccurrence[] = []
   const start = new Date(startDate)
@@ -193,18 +193,23 @@ export function generateSchedule(
   historicalShifts: Shift[] = [],
   existingSchedule: Shift[] = []
 ): Shift[] {
-  const allDates = getDaysBetweenDates(settings.startDate, settings.endDate, settings.frequency)
-  const specialDayOccurrences = getSpecialDaysInRange(settings.startDate, settings.endDate, settings.specialDays)
+  const safeSettings = {
+    ...settings,
+    specialDays: Array.isArray(settings.specialDays) ? settings.specialDays : []
+  }
+  
+  const allDates = getDaysBetweenDates(safeSettings.startDate, safeSettings.endDate, safeSettings.frequency)
+  const specialDayOccurrences = getSpecialDaysInRange(safeSettings.startDate, safeSettings.endDate, safeSettings.specialDays)
   const specialDaysMap = new Map(specialDayOccurrences.map(occ => [occ.date, occ]))
   
   const specialPeople = participants.filter(p => p.hasKeys)
   const regularPeople = participants.filter(p => !p.hasKeys)
   
-  if (participants.length < settings.peoplePerShift) {
+  if (participants.length < safeSettings.peoplePerShift) {
     throw new Error('Za mało uczestników dla wymaganej liczby osób na dyżurze')
   }
   
-  if (specialPeople.length === 0 && settings.peoplePerShift > 0) {
+  if (specialPeople.length === 0 && safeSettings.peoplePerShift > 0) {
     throw new Error('Brak osób z kluczami. Dodaj przynajmniej jedną osobę specjalną.')
   }
   
@@ -234,7 +239,7 @@ export function generateSchedule(
       participantShiftCounts.set(p.id, 0)
     })
     
-    settings.specialDays.forEach(sd => {
+    safeSettings.specialDays.forEach(sd => {
       participantSpecialDayCountsPerDay.set(sd.id, new Map())
       participants.forEach(p => {
         participantSpecialDayCountsPerDay.get(sd.id)!.set(p.id, 0)
