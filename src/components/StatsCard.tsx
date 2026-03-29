@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChartBar, Key, TrendUp, TrendDown, Minus, Star } from '@phosphor-icons/react'
 import { Participant, Shift } from '@/lib/types'
 import { motion } from 'framer-motion'
+import { useTranslation } from '@/lib/i18n'
 
 interface StatsCardProps {
   participants: Participant[]
@@ -24,6 +25,7 @@ interface ParticipantStats {
 }
 
 export function StatsCard({ participants, schedule, historicalShifts = [] }: StatsCardProps) {
+  const { t } = useTranslation()
   const calculateStats = (): ParticipantStats[] => {
     const allShifts = [...schedule, ...historicalShifts]
     
@@ -82,17 +84,17 @@ export function StatsCard({ participants, schedule, historicalShifts = [] }: Sta
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ChartBar className="text-primary" size={20} />
-            <CardTitle className="text-base">Statystyki</CardTitle>
+            <CardTitle className="text-base">{t.stats.title}</CardTitle>
           </div>
           {stats.length > 0 && (totalShifts > 0 || totalHistorical > 0) && (
             <div className="flex gap-3 text-xs">
               <div className="flex items-center gap-1">
                 <span className="font-mono font-semibold text-foreground">{totalShifts + totalHistorical}</span>
-                <span className="text-muted-foreground">łącznie</span>
+                <span className="text-muted-foreground">{t.stats.total}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="font-mono font-semibold text-foreground">{avgShiftsPerPerson.toFixed(1)}</span>
-                <span className="text-muted-foreground">średnia</span>
+                <span className="text-muted-foreground">{t.stats.avg}</span>
               </div>
             </div>
           )}
@@ -103,7 +105,7 @@ export function StatsCard({ participants, schedule, historicalShifts = [] }: Sta
           <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-center">
             <ChartBar className="mx-auto mb-2 text-muted-foreground" size={24} />
             <p className="text-xs text-muted-foreground">
-              Brak danych. Wygeneruj harmonogram lub dodaj przeszłe dyżury.
+              {t.stats.empty}
             </p>
           </div>
         ) : (

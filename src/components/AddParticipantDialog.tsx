@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Participant } from '@/lib/types'
+import { useTranslation } from '@/lib/i18n'
 
 interface AddParticipantDialogProps {
   open: boolean
@@ -26,6 +27,7 @@ export function AddParticipantDialog({
   onAdd,
   editParticipant 
 }: AddParticipantDialogProps) {
+  const { t } = useTranslation()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [hasKeys, setHasKeys] = useState(false)
@@ -62,14 +64,14 @@ export function AddParticipantDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{editParticipant ? 'Edytuj uczestnika' : 'Dodaj uczestnika'}</DialogTitle>
+          <DialogTitle>{editParticipant ? t.dialog.addParticipant.editTitle : t.dialog.addParticipant.title}</DialogTitle>
           <DialogDescription>
-            Wprowadź dane uczestnika dyżurów. Osoby z kluczami muszą być obecne na każdym dyżurze.
+            {t.dialog.addParticipant.desc}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="firstName">Imię</Label>
+            <Label htmlFor="firstName">{t.dialog.addParticipant.firstName}</Label>
             <Input
               id="firstName"
               value={firstName}
@@ -78,7 +80,7 @@ export function AddParticipantDialog({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="lastName">Nazwisko</Label>
+            <Label htmlFor="lastName">{t.dialog.addParticipant.lastName}</Label>
             <Input
               id="lastName"
               value={lastName}
@@ -88,9 +90,9 @@ export function AddParticipantDialog({
           </div>
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <Label htmlFor="hasKeys">Posiada klucze</Label>
+              <Label htmlFor="hasKeys">{t.dialog.addParticipant.hasKeys}</Label>
               <p className="text-sm text-muted-foreground">
-                Osoba specjalna, która musi być na każdym dyżurze
+                {t.dialog.addParticipant.hasKeysDesc}
               </p>
             </div>
             <Switch
@@ -102,13 +104,13 @@ export function AddParticipantDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Anuluj
+            {t.dialog.addParticipant.btnCancel}
           </Button>
           <Button 
             onClick={handleSubmit}
             disabled={!firstName.trim() || !lastName.trim()}
           >
-            {editParticipant ? 'Zapisz' : 'Dodaj'}
+            {editParticipant ? t.dialog.addParticipant.btnSave : t.dialog.addParticipant.btnAdd}
           </Button>
         </DialogFooter>
       </DialogContent>

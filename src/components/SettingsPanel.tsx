@@ -13,16 +13,21 @@ import {
 } from '@/components/ui/select'
 import { Gear, DownloadSimple, UploadSimple, Warning } from '@phosphor-icons/react'
 import { ShiftSettings } from '@/lib/types'
+import { AppLanguage, LANGUAGE_LABELS } from '@/lib/i18n'
+import { useTranslation } from '@/lib/i18n'
 
 interface SettingsPanelProps {
   settings: ShiftSettings
   maxPeople: number
+  language: AppLanguage
   onUpdate: (patch: Partial<ShiftSettings>) => void
+  onLanguageChange: (lang: AppLanguage) => void
   onExport: () => void
   onImport: (file: File) => void
 }
 
-export function SettingsPanel({ settings, maxPeople, onUpdate, onExport, onImport }: SettingsPanelProps) {
+export function SettingsPanel({ settings, maxPeople, language, onUpdate, onLanguageChange, onExport, onImport }: SettingsPanelProps) {
+  const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,21 +35,22 @@ export function SettingsPanel({ settings, maxPeople, onUpdate, onExport, onImpor
     if (file) {
       onImport(file)
     }
-    // reset so the same file can be selected again
     e.target.value = ''
   }
+
+  const availableLanguages = Object.entries(LANGUAGE_LABELS) as [AppLanguage, string][]
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
           <Gear className="text-primary" size={24} />
-          <CardTitle>Ustawienia</CardTitle>
+          <CardTitle>{t.settings.title}</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="frequency">Czestotliwosc dyzurow</Label>
+          <Label htmlFor="frequency">{t.settings.frequency}</Label>
           <Select
             value={settings.frequency}
             onValueChange={(value) =>
@@ -55,16 +61,16 @@ export function SettingsPanel({ settings, maxPeople, onUpdate, onExport, onImpor
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="daily">Codziennie</SelectItem>
-              <SelectItem value="every-2-days">Co 2 dni</SelectItem>
-              <SelectItem value="every-3-days">Co 3 dni</SelectItem>
-              <SelectItem value="weekly">Raz w tygodniu</SelectItem>
+              <SelectItem value="daily">{t.schedule.frequency.daily}</SelectItem>
+              <SelectItem value="every-2-days">{t.schedule.frequency['every-2-days']}</SelectItem>
+              <SelectItem value="every-3-days">{t.schedule.frequency['every-3-days']}</SelectItem>
+              <SelectItem value="weekly">{t.schedule.frequency.weekly}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="peoplePerShift">Liczba osob na dyzurze</Label>
+          <Label htmlFor="peoplePerShift">{t.settings.peoplePerShift}</Label>
           <Input
             id="peoplePerShift"
             type="number"
@@ -78,7 +84,7 @@ export function SettingsPanel({ settings, maxPeople, onUpdate, onExport, onImpor
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="startDate">Data poczatkowa</Label>
+          <Label htmlFor="startDate">{t.settings.startDate}</Label>
           <Input
             id="startDate"
             type="date"
@@ -88,7 +94,7 @@ export function SettingsPanel({ settings, maxPeople, onUpdate, onExport, onImpor
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="endDate">Data koncowa</Label>
+          <Label htmlFor="endDate">{t.settings.endDate}</Label>
           <Input
             id="endDate"
             type="date"
@@ -97,17 +103,34 @@ export function SettingsPanel({ settings, maxPeople, onUpdate, onExport, onImpor
           />
         </div>
 
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="language">{t.settings.language}</Label>
+          <Select
+            value={language}
+            onValueChange={(value) => onLanguageChange(value as AppLanguage)}
+          >
+            <SelectTrigger id="language">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {availableLanguages.map(([code, label]) => (
+                <SelectItem key={code} value={code}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <Separator />
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <DownloadSimple className="text-primary" size={20} />
-            <span className="text-sm font-medium">Backup danych</span>
+            <span className="text-sm font-medium">{t.settings.backup.title}</span>
           </div>
 
           <Button variant="outline" size="sm" className="w-full" onClick={onExport}>
             <DownloadSimple size={16} className="mr-2" />
-            Eksportuj dane do pliku
+            {t.settings.backup.export}
           </Button>
 
           <div className="flex flex-col gap-1">
@@ -118,7 +141,7 @@ export function SettingsPanel({ settings, maxPeople, onUpdate, onExport, onImpor
               onClick={() => fileInputRef.current?.click()}
             >
               <UploadSimple size={16} className="mr-2" />
-              Importuj dane z pliku
+              {t.settings.backup.import}
             </Button>
             <input
               ref={fileInputRef}
@@ -129,7 +152,7 @@ export function SettingsPanel({ settings, maxPeople, onUpdate, onExport, onImpor
             />
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <Warning size={12} className="shrink-0 text-amber-500" />
-              Import calkowicie nadpisuje obecne dane
+              {t.settings.backup.importWarning}
             </p>
           </div>
         </div>

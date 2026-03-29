@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +13,8 @@ import { Badge } from '@/components/ui/badge'
 import { Trash, Plus, Star } from '@phosphor-icons/react'
 import { SpecialDay, SpecialDayWeekOccurrence, SpecialDayDayOfWeek } from '@/lib/types'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
+import { useTranslation } from '@/lib/i18n'
 
 interface SpecialDaysManagerProps {
   specialDays: SpecialDay[]
@@ -21,39 +22,16 @@ interface SpecialDaysManagerProps {
   maxPeoplePerShift: number
 }
 
-const weekOccurrenceLabels: Record<SpecialDayWeekOccurrence, string> = {
-  first: '1.',
-  second: '2.',
-  third: '3.',
-  fourth: '4.',
-  last: 'Ostatni(-a)',
-}
-
-const dayOfWeekLabels: Record<SpecialDayDayOfWeek, string> = {
-  monday: 'poniedziałek',
-  tuesday: 'wtorek',
-  wednesday: 'środa',
-  thursday: 'czwartek',
-  friday: 'piątek',
-}
-
-const weekOccurrenceFieldLabel: Record<SpecialDayDayOfWeek, string> = {
-  monday: 'Który poniedziałek miesiąca',
-  tuesday: 'Który wtorek miesiąca',
-  wednesday: 'Która środa miesiąca',
-  thursday: 'Który czwartek miesiąca',
-  friday: 'Który piątek miesiąca',
-}
-
-function buildFrequencyLabel(weekOccurrence: SpecialDayWeekOccurrence, dayOfWeek: SpecialDayDayOfWeek): string {
-  return `${weekOccurrenceLabels[weekOccurrence]} ${dayOfWeekLabels[dayOfWeek]}`
-}
-
 export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }: SpecialDaysManagerProps) {
+  const { t } = useTranslation()
   const [newDayName, setNewDayName] = useState('')
   const [newDayWeekOccurrence, setNewDayWeekOccurrence] = useState<SpecialDayWeekOccurrence>('second')
   const [newDayDayOfWeek, setNewDayDayOfWeek] = useState<SpecialDayDayOfWeek>('monday')
   const [newDayPeople, setNewDayPeople] = useState(2)
+
+  const buildFrequencyLabel = (weekOccurrence: SpecialDayWeekOccurrence, dayOfWeek: SpecialDayDayOfWeek): string => {
+    return `${t.specialDays.weekOccurrence[weekOccurrence]} ${t.specialDays.dayName[dayOfWeek]}`
+  }
 
   const handleAdd = () => {
     if (!newDayName.trim()) return
@@ -82,10 +60,12 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
       <CardHeader>
         <div className="flex items-center gap-2">
           <Star className="text-primary" size={24} weight="fill" />
-          <CardTitle>Dni Specjalne</CardTitle>
+          <CardTitle>{t.specialDays.title}</CardTitle>
         </div>
         <CardDescription>
-          {specialDays.length === 0 ? 'Brak dni specjalnych' : `${specialDays.length} ${specialDays.length === 1 ? 'dzień' : 'dni'} specjalnych`}
+          {specialDays.length === 0
+            ? t.specialDays.none
+            : t.specialDays.countLabel(specialDays.length)}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -104,7 +84,7 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
                         {buildFrequencyLabel(sd.weekOccurrence, sd.dayOfWeek)}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {sd.peopleCount} {sd.peopleCount === 1 ? 'osoba' : 'osób'}
+                        {t.specialDays.peopleLabel(sd.peopleCount)}
                       </Badge>
                     </div>
                   </div>
@@ -123,18 +103,18 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
 
         <div className="border-t border-border pt-4 flex flex-col gap-3">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="specialDayName">Nazwa dnia specjalnego</Label>
+            <Label htmlFor="specialDayName">{t.specialDays.nameLabel}</Label>
             <Input
               id="specialDayName"
               value={newDayName}
               onChange={(e) => setNewDayName(e.target.value)}
-              placeholder="np. Sprzątanie, Inwentaryzacja"
+              placeholder={t.specialDays.placeholder}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="specialDayWeekOccurrence">{weekOccurrenceFieldLabel[newDayDayOfWeek]}</Label>
+              <Label htmlFor="specialDayWeekOccurrence">{t.specialDays.weekOccurrenceField[newDayDayOfWeek]}</Label>
               <Select
                 value={newDayWeekOccurrence}
                 onValueChange={(value) => setNewDayWeekOccurrence(value as SpecialDayWeekOccurrence)}
@@ -143,17 +123,17 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="first">1.</SelectItem>
-                  <SelectItem value="second">2.</SelectItem>
-                  <SelectItem value="third">3.</SelectItem>
-                  <SelectItem value="fourth">4.</SelectItem>
-                  <SelectItem value="last">Ostatni(-a)</SelectItem>
+                  <SelectItem value="first">{t.specialDays.weekOccurrence.first}</SelectItem>
+                  <SelectItem value="second">{t.specialDays.weekOccurrence.second}</SelectItem>
+                  <SelectItem value="third">{t.specialDays.weekOccurrence.third}</SelectItem>
+                  <SelectItem value="fourth">{t.specialDays.weekOccurrence.fourth}</SelectItem>
+                  <SelectItem value="last">{t.specialDays.weekOccurrence.last}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="specialDayDayOfWeek">Dzień tygodnia</Label>
+              <Label htmlFor="specialDayDayOfWeek">{t.specialDays.dayOfWeek}</Label>
               <Select
                 value={newDayDayOfWeek}
                 onValueChange={(value) => setNewDayDayOfWeek(value as SpecialDayDayOfWeek)}
@@ -162,18 +142,18 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monday">Poniedziałek</SelectItem>
-                  <SelectItem value="tuesday">Wtorek</SelectItem>
-                  <SelectItem value="wednesday">Środa</SelectItem>
-                  <SelectItem value="thursday">Czwartek</SelectItem>
-                  <SelectItem value="friday">Piątek</SelectItem>
+                  <SelectItem value="monday">{t.specialDays.dayName.monday}</SelectItem>
+                  <SelectItem value="tuesday">{t.specialDays.dayName.tuesday}</SelectItem>
+                  <SelectItem value="wednesday">{t.specialDays.dayName.wednesday}</SelectItem>
+                  <SelectItem value="thursday">{t.specialDays.dayName.thursday}</SelectItem>
+                  <SelectItem value="friday">{t.specialDays.dayName.friday}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="specialDayPeople">Liczba osób</Label>
+            <Label htmlFor="specialDayPeople">{t.specialDays.peopleCount}</Label>
             <Input
               id="specialDayPeople"
               type="number"
@@ -186,7 +166,7 @@ export function SpecialDaysManager({ specialDays, onUpdate, maxPeoplePerShift }:
 
           <Button onClick={handleAdd} disabled={!newDayName.trim()}>
             <Plus size={16} className="mr-2" />
-            Dodaj dzień specjalny
+            {t.specialDays.addBtn}
           </Button>
         </div>
       </CardContent>

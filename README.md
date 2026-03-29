@@ -42,6 +42,19 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 - Eksport tworzy wersjonowany plik kopii zapasowej JSON o nazwie w stylu `duty-planner-backup-YYYY-MM-DD.json`.
 - Import przywraca uczestników, ustawienia, planowany harmonogram oraz historyczne dyżury.
 - Import całkowicie zastępuje bieżący stan zapisany w przeglądarce.
+- Preferencja językowa jest przechowywana oddzielnie w local storage pod kluczem `duty-planner:v1:language`.
+
+## Wielojęzyczność
+
+Aplikacja zawiera wbudowaną infrastrukturę internacjonalizacji (i18n):
+
+- Wszystkie teksty widoczne dla użytkownika, komunikaty toast i formatowanie dat są pobierane ze słowników tłumaczeń, a nie zakodowane bezpośrednio w komponentach.
+- Wybór języka jest dostępny w panelu ustawień i jest zapisywany lokalnie w przeglądarce.
+- W tej iteracji dostępny jest wyłącznie **język polski** jako jedyny kompletny słownik.
+- Dodanie kolejnego języka wymaga wyłącznie:
+  1. Dodania nowego pliku słownika w `src/lib/i18n/` implementującego interfejs `Translations`,
+  2. Rozszerzenia unii typów `AppLanguage` o nowy kod języka,
+  3. Rejestracji słownika w mapie `TRANSLATIONS` oraz etykiety w `LANGUAGE_LABELS` w `src/lib/i18n/index.tsx`.
 
 ## Uruchomienie lokalne
 
@@ -80,6 +93,7 @@ npm run lint
 - `src/hooks` zawiera hooki zarządzające stanem opartym o local storage.
 - `src/lib/schedule` zawiera logikę generowania harmonogramu, narzędzia do pracy z datami, scoring i obsługę dni specjalnych.
 - `src/lib/backup.ts` zawiera logikę eksportu i importu danych.
+- `src/lib/i18n` zawiera infrastrukturę wielojęzyczności: typy, słowniki i provider kontekstu językowego.
 
 ## Aktualny zakres produktu
 

@@ -4,13 +4,16 @@ import "@github/spark/spark"
 
 import App from './App.tsx'
 import { ErrorFallback } from './ErrorFallback.tsx'
+import { LanguageProvider } from './lib/i18n'
 
 import "./main.css"
 import "./styles/theme.css"
 import "./index.css"
 
 createRoot(document.getElementById('root')!).render(
-  <ErrorBoundary FallbackComponent={ErrorFallback}>
-    <App />
-   </ErrorBoundary>
+  <LanguageProvider>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <App />
+    </ErrorBoundary>
+  </LanguageProvider>
 )

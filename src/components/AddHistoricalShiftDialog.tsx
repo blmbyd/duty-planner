@@ -15,6 +15,7 @@ import { formatLocalDate } from '@/lib/schedule/date-utils'
 import { Badge } from '@/components/ui/badge'
 import { Key, X } from '@phosphor-icons/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useTranslation } from '@/lib/i18n'
 
 interface AddHistoricalShiftDialogProps {
   open: boolean
@@ -29,6 +30,7 @@ export function AddHistoricalShiftDialog({
   onAdd,
   participants 
 }: AddHistoricalShiftDialogProps) {
+  const { t } = useTranslation()
   const [date, setDate] = useState(formatLocalDate(new Date()))
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([])
 
@@ -65,14 +67,14 @@ export function AddHistoricalShiftDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Dodaj przeszły dyżur</DialogTitle>
+          <DialogTitle>{t.dialog.addHistorical.title}</DialogTitle>
           <DialogDescription>
-            Wprowadź informacje o dyżurze, który już się odbył. Te dane będą uwzględnione w statystykach i przy generowaniu nowych harmonogramów.
+            {t.dialog.addHistorical.desc}
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="shiftDate">Data dyżuru</Label>
+            <Label htmlFor="shiftDate">{t.dialog.addHistorical.shiftDate}</Label>
             <Input
               id="shiftDate"
               type="date"
@@ -83,11 +85,11 @@ export function AddHistoricalShiftDialog({
           </div>
           
           <div className="flex flex-col gap-2">
-            <Label>Uczestnicy dyżuru ({selectedParticipants.length} wybrano)</Label>
+            <Label>{t.dialog.addHistorical.participantsLabel(selectedParticipants.length)}</Label>
             {participants.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border bg-muted/20 p-4 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Brak uczestników w systemie. Dodaj uczestników aby móc przypisać ich do przeszłych dyżurów.
+                  {t.dialog.addHistorical.noParticipants}
                 </p>
               </div>
             ) : (
@@ -120,7 +122,7 @@ export function AddHistoricalShiftDialog({
                             {participant.hasKeys && (
                               <Badge variant="default" className="mt-1 bg-accent text-accent-foreground text-xs">
                                 <Key size={10} className="mr-1" />
-                                Klucze
+                                {t.participants.keys}
                               </Badge>
                             )}
                           </div>
@@ -140,13 +142,13 @@ export function AddHistoricalShiftDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Anuluj
+            {t.dialog.addHistorical.btnCancel}
           </Button>
           <Button 
             onClick={handleSubmit}
             disabled={!date || selectedParticipants.length === 0}
           >
-            Dodaj dyżur
+            {t.dialog.addHistorical.btnAdd}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -19,15 +19,9 @@ import {
   Star,
 } from '@phosphor-icons/react'
 import { Participant, Shift, ShiftSettings } from '@/lib/types'
-import { formatDatePL, isPastDate } from '@/lib/schedule/date-utils'
+import { formatDate, isPastDate } from '@/lib/schedule/date-utils'
 import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
-
-const FREQUENCY_LABELS: Record<ShiftSettings['frequency'], string> = {
-  daily: 'Codziennie',
-  'every-2-days': 'Co 2 dni',
-  'every-3-days': 'Co 3 dni',
-  weekly: 'Raz w tygodniu',
-}
+import { useTranslation } from '@/lib/i18n'
 
 interface SchedulePanelProps {
   participants: Participant[]
@@ -54,13 +48,15 @@ export function SchedulePanel({
   onAddHistorical,
   onHistoricalDialogChange,
 }: SchedulePanelProps) {
+  const { t, locale } = useTranslation()
+
   const allShifts = [...historicalShifts, ...schedule].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
 
   const getParticipantName = (id: string) => {
     const p = participants.find((p) => p.id === id)
-    return p ? `${p.firstName} ${p.lastName}` : 'Nieznany'
+    return p ? `${p.firstName} ${p.lastName}` : t.schedule.unknown
   }
 
   return (
@@ -70,7 +66,7 @@ export function SchedulePanel({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CalendarDots className="text-primary" size={24} />
-              <CardTitle>Harmonogram Dyzurow</CardTitle>
+              <CardTitle>{t.schedule.title}</CardTitle>
             </div>
             <div className="flex gap-2">
               <Button
@@ -79,7 +75,7 @@ export function SchedulePanel({
                 disabled={participants.length === 0}
               >
                 <ClockCounterClockwise size={16} className="mr-2" />
-                Dodaj przeszly dyzur
+                {t.schedule.addHistoricalBtn}
               </Button>
               <Button
                 onClick={onGenerate}
@@ -91,16 +87,16 @@ export function SchedulePanel({
                   size={16}
                   className={`mr-2 ${isGenerating ? 'animate-spin' : ''}`}
                 />
-                {schedule.length > 0 ? 'Uzupelnij harmonogram' : 'Generuj harmonogram'}
+                {schedule.length > 0 ? t.schedule.refillBtn : t.schedule.generateBtn}
               </Button>
             </div>
           </div>
           {allShifts.length > 0 && (
             <CardDescription>
-              {historicalShifts.length > 0 && `${historicalShifts.length} przeszlych`}
+              {historicalShifts.length > 0 && t.schedule.historical(historicalShifts.length)}
               {historicalShifts.length > 0 && schedule.length > 0 && ' \u2022 '}
-              {schedule.length > 0 && `${schedule.length} zaplanowanych`}
-              {schedule.length > 0 && ` \u2022 ${FREQUENCY_LABELS[settings.frequency]}`}
+              {schedule.length > 0 && t.schedule.planned(schedule.length)}
+              {schedule.length > 0 && ` \u2022 ${t.schedule.frequency[settings.frequency]}`}
             </CardDescription>
           )}
         </CardHeader>
@@ -108,16 +104,16 @@ export function SchedulePanel({
           {allShifts.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border bg-muted/20 p-12 text-center">
               <CalendarDots className="mx-auto mb-4 text-muted-foreground" size={48} />
-              <h3 className="mb-2 text-lg font-semibold text-foreground">Brak harmonogramu</h3>
+              <h3 className="mb-2 text-lg font-semibold text-foreground">{t.schedule.empty.title}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Skonfiguruj uczestnikow i ustawienia, a nastepnie wygeneruj harmonogram dyzurow.
+                {t.schedule.empty.desc}
               </p>
               <Button
                 onClick={onGenerate}
                 disabled={participants.length < settings.peoplePerShift}
               >
                 <ArrowsClockwise size={16} className="mr-2" />
-                Generuj harmonogram
+                {t.schedule.generateBtn}
               </Button>
             </div>
           ) : (
@@ -125,10 +121,10 @@ export function SchedulePanel({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px]">#</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Uczestnicy</TableHead>
-                    <TableHead className="w-[120px]">Status</TableHead>
+                    <TableHead className="w-[100px]">{t.schedule.column.no}</TableHead>
+                    <TableHead>{t.schedule.column.date}</TableHead>
+                    <TableHead>{t.schedule.column.participants}</TableHead>
+                    <TableHead className="w-[120px]">{t.schedule.column.status}</TableHead>
                     <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -145,7 +141,7 @@ export function SchedulePanel({
                         </TableCell>
                         <TableCell className="font-mono">
                           <div className="flex items-center gap-2">
-                            {formatDatePL(shift.date)}
+                            {formatDate(shift.date, locale)}
                             {shift.specialDayId && (
                               <Badge
                                 variant="outline"
@@ -154,7 +150,7 @@ export function SchedulePanel({
                                 <Star size={12} weight="fill" className="mr-1" />
                                 {settings.specialDays.find(
                                   (sd) => sd.id === shift.specialDayId
-                                )?.name || 'Dzien specjalny'}
+                                )?.name || t.schedule.specialDay}
                               </Badge>
                             )}
                           </div>
@@ -189,7 +185,7 @@ export function SchedulePanel({
                             variant={isHistorical ? 'outline' : 'default'}
                             className={isHistorical ? 'text-muted-foreground' : ''}
                           >
-                            {isHistorical ? 'Wykonany' : 'Zaplanowany'}
+                            {isHistorical ? t.schedule.status.done : t.schedule.status.planned}
                           </Badge>
                         </TableCell>
                         <TableCell>

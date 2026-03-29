@@ -37,6 +37,7 @@ Produkt ma ograniczyć ręczną koordynację i zapewnić powtarzalny, zrozumiał
 - Przechowywanie danych po stronie serwera
 - Ręczna edycja harmonogramu metodą przeciągnij i upuść
 - Zaawansowane zarządzanie urlopami lub dostępnością
+- Kompletne słowniki dla języków innych niż polski (infrastruktura i18n istnieje, ale drugi język nie jest dostarczony w tej iteracji)
 
 ## Użytkownicy docelowi
 
@@ -165,6 +166,17 @@ Kryteria akceptacji:
 - Niepoprawny JSON albo nieprawidłowa struktura zwraca czytelny komunikat błędu.
 - Import całkowicie zastępuje bieżące dane lokalne.
 
+### 9. Język interfejsu
+
+Aplikacja musi obsługiwać wybór języka interfejsu.
+
+Kryteria akceptacji:
+
+- Wybór języka jest dostępny w panelu ustawień.
+- Preferencja językowa jest zapisywana lokalnie w przeglądarce i trwa po odświeżeniu strony.
+- Wszystkie teksty UI, komunikaty toast, formatowanie dat i nazwy dni tygodnia są pobierane ze słownika aktywnego języka.
+- W bieżącej iteracji dostępny jest wyłącznie język polski; infrastruktura pozwala na dodanie kolejnych języków bez zmian w komponentach.
+
 ## Główny przepływ użytkownika
 
 1. Użytkownik otwiera aplikację.
@@ -200,6 +212,7 @@ Kryteria akceptacji:
 - Browser local storage jako domyślna warstwa trwałości danych
 - Kopia zapasowa JSON jako mechanizm przenoszenia danych
 - Kod oparty na React, TypeScript i środowisku deweloperskim Vite
+- Infrastruktura i18n zaimplementowana bez zewnętrznych bibliotek; w bieżącej iteracji dostępny jest wyłącznie język polski
 
 ## Metryki sukcesu
 

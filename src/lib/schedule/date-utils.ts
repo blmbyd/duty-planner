@@ -48,12 +48,17 @@ export function isPastDate(dateStr: string): boolean {
   return date < today
 }
 
-export function formatDatePL(dateStr: string): string {
+export function formatDate(dateStr: string, locale: string): string {
   const date = new Date(dateStr)
-  return date.toLocaleDateString('pl-PL', {
+  return date.toLocaleDateString(locale, {
     weekday: 'short',
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   })
+}
+
+/** @deprecated Use formatDate(dateStr, locale) instead */
+export function formatDatePL(dateStr: string): string {
+  return formatDate(dateStr, 'pl-PL')
 }

@@ -6,6 +6,7 @@ import { Users, Plus, Key, Pencil, Trash } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 import { Participant } from '@/lib/types'
 import { AddParticipantDialog } from '@/components/AddParticipantDialog'
+import { useTranslation } from '@/lib/i18n'
 
 interface ParticipantsPanelProps {
   participants: Participant[]
@@ -30,24 +31,25 @@ export function ParticipantsPanel({
   onDelete,
   onAddSamples,
 }: ParticipantsPanelProps) {
+  const { t } = useTranslation()
+
   return (
     <>
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Users className="text-primary" size={24} />
-            <CardTitle>Uczestnicy</CardTitle>
+            <CardTitle>{t.participants.title}</CardTitle>
           </div>
           <CardDescription>
-            {participants.length}{' '}
-            {participants.length === 1 ? 'osoba' : 'osob'} w systemie
+            {t.participants.countLabel(participants.length)}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2 mb-4">
             <Button className="flex-1" onClick={onOpenAdd}>
               <Plus className="mr-2" />
-              Dodaj uczestnika
+              {t.participants.addBtn}
             </Button>
             <Button
               variant="secondary"
@@ -55,7 +57,7 @@ export function ParticipantsPanel({
               disabled={participants.length >= 10}
             >
               <Users className="mr-2" />
-              Wypelnij przykladami
+              {t.participants.fillSamplesBtn}
             </Button>
           </div>
 
@@ -63,7 +65,7 @@ export function ParticipantsPanel({
             <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
               <Users className="mx-auto mb-2 text-muted-foreground" size={32} />
               <p className="text-sm text-muted-foreground">
-                Brak uczestnikow. Dodaj pierwszego uczestnika aby rozpoczac.
+                {t.participants.empty}
               </p>
             </div>
           ) : (
@@ -92,7 +94,7 @@ export function ParticipantsPanel({
                             className="mt-1 bg-accent text-accent-foreground"
                           >
                             <Key size={12} className="mr-1" />
-                            Klucze
+                            {t.participants.keys}
                           </Badge>
                         )}
                       </div>
