@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -47,10 +47,10 @@ import { generateSchedule, exportParticipantsToJSON, exportScheduleToJSON, impor
 import { motion } from 'framer-motion'
 
 function App() {
-  const [participants, setParticipants] = useKV<Participant[]>('participants', [])
-  const [settings, setSettings] = useKV<ShiftSettings>('settings', DEFAULT_SETTINGS)
-  const [schedule, setSchedule] = useKV<Shift[]>('schedule', [])
-  const [historicalShifts, setHistoricalShifts] = useKV<Shift[]>('historicalShifts', [])
+  const [participants, setParticipants] = useLocalStorage<Participant[]>('participants', [])
+  const [settings, setSettings] = useLocalStorage<ShiftSettings>('settings', DEFAULT_SETTINGS)
+  const [schedule, setSchedule] = useLocalStorage<Shift[]>('schedule', [])
+  const [historicalShifts, setHistoricalShifts] = useLocalStorage<Shift[]>('historicalShifts', [])
   
   const [dialogOpen, setDialogOpen] = useState(false)
   const [historicalDialogOpen, setHistoricalDialogOpen] = useState(false)
