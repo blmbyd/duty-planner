@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { 
   Users, 
@@ -250,7 +251,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <>
+      <Toaster />
+      <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8">
           <h1 className="text-4xl font-bold tracking-tight text-foreground">
@@ -628,7 +631,8 @@ function App() {
         onAdd={handleAddHistoricalShift}
         participants={participantsList}
       />
-    </div>
+      </div>
+    </>
   )
 }
 
