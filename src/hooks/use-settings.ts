@@ -25,5 +25,16 @@ export function useSettings() {
     [setSettings]
   )
 
-  return { settings: current, update, updateSpecialDays }
+  const replace = useCallback(
+    (incoming: ShiftSettings) => {
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        ...incoming,
+        specialDays: Array.isArray(incoming?.specialDays) ? incoming.specialDays : [],
+      })
+    },
+    [setSettings]
+  )
+
+  return { settings: current, update, updateSpecialDays, replace }
 }

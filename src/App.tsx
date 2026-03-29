@@ -10,10 +10,11 @@ import { SchedulePanel } from '@/components/SchedulePanel'
 import { StatsCard } from '@/components/StatsCard'
 import { SpecialDaysManager } from '@/components/SpecialDaysManager'
 import { Participant, Shift } from '@/lib/types'
+import { exportBackup, parseBackup } from '@/lib/backup'
 
 function App() {
   const participantsState = useParticipants()
-  const { settings, update: updateSettings, updateSpecialDays } = useSettings()
+  const { settings, update: updateSettings, updateSpecialDays, replace: replaceSettings } = useSettings()
   const scheduleState = useSchedule()
   const historyState = useHistoricalShifts()
 
@@ -81,6 +82,43 @@ function App() {
     toast.success('Dyzur usuniety')
   }
 
+  const handleExport = () => {
+    try {
+      exportBackup({
+        participants: participantsState.participants,
+        settings,
+        schedule: scheduleState.schedule,
+        historicalShifts: historyState.historicalShifts,
+      })
+      toast.success('Dane wyeksportowane do pliku')
+    } catch {
+      toast.error('Blad podczas eksportu danych')
+    }
+  }
+
+  const handleImport = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const raw = e.target?.result
+        if (typeof raw !== 'string') throw new Error('Nie mozna odczytac pliku.')
+        const appData = parseBackup(raw)
+        // Restore in order: participants first (IDs used by shifts), then the rest
+        participantsState.replace(appData.participants)
+        replaceSettings(appData.settings)
+        scheduleState.replace(appData.schedule)
+        historyState.replace(appData.historicalShifts)
+        toast.success('Dane przywrocone z pliku')
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Blad podczas importu danych')
+      }
+    }
+    reader.onerror = () => {
+      toast.error('Blad odczytu pliku')
+    }
+    reader.readAsText(file)
+  }
+
   return (
     <>
       <Toaster />
@@ -116,6 +154,8 @@ function App() {
                 settings={settings}
                 maxPeople={participantsState.participants.length}
                 onUpdate={updateSettings}
+                onExport={handleExport}
+                onImport={handleImport}
               />
 
               <SpecialDaysManager

@@ -45,5 +45,12 @@ export function useSchedule() {
     setSchedule([])
   }, [setSchedule])
 
-  return { schedule: currentSchedule, isGenerating, generate, removeShift, reset }
+  const replace = useCallback(
+    (incoming: Shift[]) => {
+      setSchedule(Array.isArray(incoming) ? incoming : [])
+    },
+    [setSchedule]
+  )
+
+  return { schedule: currentSchedule, isGenerating, generate, removeShift, reset, replace }
 }

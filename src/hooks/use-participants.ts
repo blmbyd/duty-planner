@@ -48,6 +48,13 @@ export function useParticipants() {
     setEditingParticipant(undefined)
   }, [])
 
+  const replace = useCallback(
+    (incoming: Participant[]) => {
+      setParticipants(Array.isArray(incoming) ? incoming : [])
+    },
+    [setParticipants]
+  )
+
   const addSampleParticipants = useCallback(() => {
     const samples: Participant[] = [
       { id: 'p1', firstName: 'Anna', lastName: 'Kowalska', hasKeys: true },
@@ -85,6 +92,7 @@ export function useParticipants() {
     editingParticipant,
     addOrUpdate,
     remove,
+    replace,
     openEdit,
     openAdd,
     closeDialog,
