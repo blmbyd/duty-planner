@@ -1,567 +1,152 @@
-import { useState } from 'react'
-import { useLocalStorage } from '@/hooks/use-local-storage'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+﻿import { toast } from 'sonner'
 import { Toaster } from '@/components/ui/sonner'
-import { toast } from 'sonner'
-import { 
-  Users, 
-  CalendarDots, 
-  Gear, 
-  Plus, 
-  Key, 
-  ArrowsClockwise, 
-  Trash,
-  Pencil,
-  ClockCounterClockwise,
-  Star
-} from '@phosphor-icons/react'
-import { AddParticipantDialog } from '@/components/AddParticipantDialog'
-import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
+import { useParticipants } from '@/hooks/use-participants'
+import { useSettings } from '@/hooks/use-settings'
+import { useSchedule } from '@/hooks/use-schedule'
+import { useHistoricalShifts } from '@/hooks/use-historical-shifts'
+import { ParticipantsPanel } from '@/components/ParticipantsPanel'
+import { SettingsPanel } from '@/components/SettingsPanel'
+import { SchedulePanel } from '@/components/SchedulePanel'
 import { StatsCard } from '@/components/StatsCard'
 import { SpecialDaysManager } from '@/components/SpecialDaysManager'
-import { Participant, ShiftSettings, Shift, DEFAULT_SETTINGS } from '@/lib/types'
-import { generateSchedule } from '@/lib/schedule-generator'
-import { motion } from 'framer-motion'
+import { Participant, Shift } from '@/lib/types'
 
 function App() {
-  const [participants, setParticipants] = useLocalStorage<Participant[]>('participants', [])
-  const [settings, setSettings] = useLocalStorage<ShiftSettings>('settings', DEFAULT_SETTINGS)
-  const [schedule, setSchedule] = useLocalStorage<Shift[]>('schedule', [])
-  const [historicalShifts, setHistoricalShifts] = useLocalStorage<Shift[]>('historicalShifts', [])
-  
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [historicalDialogOpen, setHistoricalDialogOpen] = useState(false)
-  const [editingParticipant, setEditingParticipant] = useState<Participant | undefined>()
-  const [isGenerating, setIsGenerating] = useState(false)
+  const participantsState = useParticipants()
+  const { settings, update: updateSettings, updateSpecialDays } = useSettings()
+  const scheduleState = useSchedule()
+  const historyState = useHistoricalShifts()
 
-  const participantsList = participants || []
-  const currentSettings = {
-    ...DEFAULT_SETTINGS,
-    ...(settings || {}),
-    specialDays: (settings?.specialDays || [])
-  }
-  const currentSchedule = schedule || []
-  const currentHistoricalShifts = historicalShifts || []
-
-  const handleAddParticipant = (participant: Participant) => {
-    setParticipants((current) => {
-      const list = current || []
-      const existing = list.findIndex(p => p.id === participant.id)
-      if (existing !== -1) {
-        const updated = [...list]
-        updated[existing] = participant
-        return updated
+  const handleGenerate = async () => {
+    const { participants } = participantsState
+    if (participants.length < settings.peoplePerShift) {
+      toast.error('Za malo uczestnikow dla wymaganej liczby osob na dyzurze')
+      return
+    }
+    if (!participants.some((p) => p.hasKeys)) {
+      toast.error('Dodaj przynajmniej jedna osobe z kluczami')
+      return
+    }
+    try {
+      const { added, total } = await scheduleState.generate(
+        participants,
+        settings,
+        historyState.historicalShifts
+      )
+      if (added > 0) {
+        toast.success(`Dodano ${added} nowych dyzurow (lacznie: ${total})`)
+      } else {
+        toast.info('Harmonogram jest juz kompletny')
       }
-      return [...list, participant]
-    })
-    setEditingParticipant(undefined)
-    toast.success(editingParticipant ? 'Uczestnik zaktualizowany' : 'Uczestnik dodany')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Blad generowania harmonogramu')
+    }
   }
 
-  const handleEditParticipant = (participant: Participant) => {
-    setEditingParticipant(participant)
-    setDialogOpen(true)
+  const handleAddOrUpdateParticipant = (participant: Participant) => {
+    const isEdit = !!participantsState.editingParticipant
+    participantsState.addOrUpdate(participant)
+    toast.success(isEdit ? 'Uczestnik zaktualizowany' : 'Uczestnik dodany')
   }
 
   const handleDeleteParticipant = (id: string) => {
-    setParticipants((current) => (current || []).filter(p => p.id !== id))
-    toast.success('Uczestnik usunięty')
+    participantsState.remove(id)
+    toast.success('Uczestnik usuniety')
   }
 
-  const handleAddHistoricalShift = (shift: Shift) => {
-    setHistoricalShifts((current) => {
-      const existing = (current || []).some(s => s.id === shift.id)
-      if (existing) return current || []
-      return [...(current || []), { ...shift, isHistorical: true }]
-    })
-    toast.success('Przeszły dyżur dodany')
+  const handleAddSamples = async () => {
+    const result = participantsState.addSampleParticipants()
+    toast.success('Dodano przykladowych uczestnikow')
+    if (result.length >= settings.peoplePerShift) {
+      try {
+        await scheduleState.generate(result, settings, historyState.historicalShifts)
+        toast.success('Automatycznie wygenerowano harmonogram')
+      } catch {
+        // przykladowi uczestnicy zostali dodani, generowanie jest opcjonalne
+      }
+    }
   }
 
-  const handleDeleteShift = (shiftId: string, isHistorical: boolean) => {
+  const handleAddHistorical = (shift: Shift) => {
+    historyState.add(shift)
+    toast.success('Przeszly dyzur dodany')
+  }
+
+  const handleDeleteShift = (id: string, isHistorical: boolean) => {
     if (isHistorical) {
-      setHistoricalShifts((current) => (current || []).filter(s => s.id !== shiftId))
+      historyState.remove(id)
     } else {
-      setSchedule((current) => (current || []).filter(s => s.id !== shiftId))
+      scheduleState.removeShift(id)
     }
-    toast.success('Dyżur usunięty')
-  }
-
-  const handleGenerateSchedule = async () => {
-    if (participantsList.length < currentSettings.peoplePerShift) {
-      toast.error('Za mało uczestników dla wymaganej liczby osób na dyżurze')
-      return
-    }
-
-    const specialPeople = participantsList.filter(p => p.hasKeys)
-    if (specialPeople.length === 0) {
-      toast.error('Dodaj przynajmniej jedną osobę z kluczami')
-      return
-    }
-
-    setIsGenerating(true)
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500))
-      const newSchedule = generateSchedule(participantsList, currentSettings, currentHistoricalShifts, currentSchedule)
-      const addedCount = newSchedule.length - currentSchedule.length
-      setSchedule(newSchedule)
-      
-      if (addedCount > 0) {
-        toast.success(`Dodano ${addedCount} nowych dyżurów (łącznie: ${newSchedule.length})`)
-      } else {
-        toast.info('Harmonogram jest już kompletny')
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Błąd generowania harmonogramu')
-    } finally {
-      setIsGenerating(false)
-    }
-  }
-
-  const handleAddSampleParticipants = async () => {
-    const sampleParticipants: Participant[] = [
-      { id: 'p1', firstName: 'Anna', lastName: 'Kowalska', hasKeys: true },
-      { id: 'p2', firstName: 'Jan', lastName: 'Nowak', hasKeys: false },
-      { id: 'p3', firstName: 'Maria', lastName: 'Wiśniewska', hasKeys: true },
-      { id: 'p4', firstName: 'Piotr', lastName: 'Wójcik', hasKeys: false },
-      { id: 'p5', firstName: 'Katarzyna', lastName: 'Kamińska', hasKeys: false },
-      { id: 'p6', firstName: 'Tomasz', lastName: 'Lewandowski', hasKeys: false },
-      { id: 'p7', firstName: 'Agnieszka', lastName: 'Zielińska', hasKeys: false },
-      { id: 'p8', firstName: 'Michał', lastName: 'Szymański', hasKeys: false },
-      { id: 'p9', firstName: 'Magdalena', lastName: 'Dąbrowska', hasKeys: true },
-      { id: 'p10', firstName: 'Krzysztof', lastName: 'Mazur', hasKeys: false },
-    ]
-
-    let updatedParticipants: Participant[] = []
-    
-    setParticipants((current) => {
-      const existing = current || []
-      const newParticipants = sampleParticipants.filter(
-        sample => !existing.some(p => p.id === sample.id)
-      )
-      updatedParticipants = [...existing, ...newParticipants]
-      return updatedParticipants
-    })
-
-    toast.success(`Dodano ${sampleParticipants.length} przykładowych uczestników`)
-
-    setTimeout(() => {
-      if (updatedParticipants.length >= currentSettings.peoplePerShift) {
-        setIsGenerating(true)
-        setTimeout(async () => {
-          try {
-            const newSchedule = generateSchedule(updatedParticipants, currentSettings, currentHistoricalShifts, currentSchedule)
-            setSchedule(newSchedule)
-            const addedCount = newSchedule.length - currentSchedule.length
-            if (addedCount > 0) {
-              toast.success(`Automatycznie wygenerowano ${addedCount} dyżurów`)
-            }
-          } catch (error) {
-            toast.error(error instanceof Error ? error.message : 'Błąd generowania harmonogramu')
-          } finally {
-            setIsGenerating(false)
-          }
-        }, 500)
-      }
-    }, 100)
-  }
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('pl-PL', { 
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    })
-  }
-
-  const getParticipantName = (id: string) => {
-    const participant = participantsList.find(p => p.id === id)
-    return participant ? `${participant.firstName} ${participant.lastName}` : 'Nieznany'
-  }
-
-  const frequencyLabels = {
-    'daily': 'Codziennie',
-    'every-2-days': 'Co 2 dni',
-    'every-3-days': 'Co 3 dni',
-    'weekly': 'Raz w tygodniu'
-  }
-
-  const allShifts = [...currentHistoricalShifts, ...currentSchedule].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
-
-  const isPastDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return date < today
+    toast.success('Dyzur usuniety')
   }
 
   return (
     <>
       <Toaster />
       <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">
-            Planer Dyżurów
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Inteligentne planowanie i optymalizacja dyżurów w grupie
-          </p>
-        </header>
+        <div className="mx-auto max-w-7xl">
+          <header className="mb-8">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground">
+              Planer Dyzurow
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              Inteligentne planowanie i optymalizacja dyzurow w grupie
+            </p>
+          </header>
 
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <div className="flex flex-col gap-6 lg:w-1/3">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Users className="text-primary" size={24} />
-                  <CardTitle>Uczestnicy</CardTitle>
-                </div>
-                <CardDescription>
-                  {participantsList.length} {participantsList.length === 1 ? 'osoba' : 'osób'} w systemie
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-2 mb-4">
-                  <Button 
-                    className="flex-1" 
-                    onClick={() => {
-                      setEditingParticipant(undefined)
-                      setDialogOpen(true)
-                    }}
-                  >
-                    <Plus className="mr-2" />
-                    Dodaj uczestnika
-                  </Button>
-                  <Button 
-                    variant="secondary"
-                    onClick={handleAddSampleParticipants}
-                    disabled={participantsList.length >= 10}
-                  >
-                    <Users className="mr-2" />
-                    Wypełnij przykładami
-                  </Button>
-                </div>
+          <div className="flex flex-col gap-6 lg:flex-row">
+            <div className="flex flex-col gap-6 lg:w-1/3">
+              <ParticipantsPanel
+                participants={participantsState.participants}
+                dialogOpen={participantsState.dialogOpen}
+                editingParticipant={participantsState.editingParticipant}
+                onOpenAdd={participantsState.openAdd}
+                onOpenEdit={participantsState.openEdit}
+                onCloseDialog={(open) => {
+                  participantsState.setDialogOpen(open)
+                  if (!open) participantsState.closeDialog()
+                }}
+                onAddOrUpdate={handleAddOrUpdateParticipant}
+                onDelete={handleDeleteParticipant}
+                onAddSamples={handleAddSamples}
+              />
 
-                {participantsList.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-8 text-center">
-                    <Users className="mx-auto mb-2 text-muted-foreground" size={32} />
-                    <p className="text-sm text-muted-foreground">
-                      Brak uczestników. Dodaj pierwszego uczestnika aby rozpocząć.
-                    </p>
-                  </div>
-                ) : (
-                  <ScrollArea className="h-[300px]">
-                    <div className="flex flex-col gap-2">
-                      {participantsList.map((participant, index) => (
-                        <motion.div
-                          key={participant.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium">
-                              {participant.firstName[0]}{participant.lastName[0]}
-                            </div>
-                            <div>
-                              <div className="font-medium text-card-foreground">
-                                {participant.firstName} {participant.lastName}
-                              </div>
-                              {participant.hasKeys && (
-                                <Badge variant="default" className="mt-1 bg-accent text-accent-foreground">
-                                  <Key size={12} className="mr-1" />
-                                  Klucze
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => handleEditParticipant(participant)}
-                            >
-                              <Pencil size={16} />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => handleDeleteParticipant(participant.id)}
-                            >
-                              <Trash size={16} />
-                            </Button>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
+              <SettingsPanel
+                settings={settings}
+                maxPeople={participantsState.participants.length}
+                onUpdate={updateSettings}
+              />
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Gear className="text-primary" size={24} />
-                  <CardTitle>Ustawienia</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="frequency">Częstotliwość dyżurów</Label>
-                  <Select
-                    value={currentSettings.frequency}
-                    onValueChange={(value) => 
-                      setSettings((current) => ({ ...(current || DEFAULT_SETTINGS), frequency: value as ShiftSettings['frequency'] }))
-                    }
-                  >
-                    <SelectTrigger id="frequency">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="daily">Codziennie</SelectItem>
-                      <SelectItem value="every-2-days">Co 2 dni</SelectItem>
-                      <SelectItem value="every-3-days">Co 3 dni</SelectItem>
-                      <SelectItem value="weekly">Raz w tygodniu</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <SpecialDaysManager
+                specialDays={settings.specialDays || []}
+                onUpdate={updateSpecialDays}
+                maxPeoplePerShift={participantsState.participants.length || 10}
+              />
+            </div>
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="peoplePerShift">Liczba osób na dyżurze</Label>
-                  <Input
-                    id="peoplePerShift"
-                    type="number"
-                    min="1"
-                    max={participantsList.length || 10}
-                    value={currentSettings.peoplePerShift}
-                    onChange={(e) => 
-                      setSettings((current) => ({ 
-                        ...(current || DEFAULT_SETTINGS), 
-                        peoplePerShift: Math.max(1, parseInt(e.target.value) || 1) 
-                      }))
-                    }
-                  />
-                </div>
+            <div className="flex-1 flex flex-col gap-6">
+              <StatsCard
+                participants={participantsState.participants}
+                schedule={scheduleState.schedule}
+                historicalShifts={historyState.historicalShifts}
+              />
 
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="startDate">Data początkowa</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={currentSettings.startDate}
-                    onChange={(e) => 
-                      setSettings((current) => ({ ...(current || DEFAULT_SETTINGS), startDate: e.target.value }))
-                    }
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="endDate">Data końcowa</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={currentSettings.endDate}
-                    onChange={(e) => 
-                      setSettings((current) => ({ ...(current || DEFAULT_SETTINGS), endDate: e.target.value }))
-                    }
-                  />
-                </div>
-
-              </CardContent>
-            </Card>
-
-            <SpecialDaysManager
-              specialDays={currentSettings.specialDays || []}
-              onUpdate={(specialDays) => setSettings((current) => ({ ...(current || DEFAULT_SETTINGS), specialDays }))}
-              maxPeoplePerShift={participantsList.length || 10}
-            />
-          </div>
-
-          <div className="flex-1 flex flex-col gap-6">
-            <StatsCard 
-              participants={participantsList}
-              schedule={currentSchedule}
-              historicalShifts={currentHistoricalShifts}
-            />
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CalendarDots className="text-primary" size={24} />
-                    <CardTitle>Harmonogram Dyżurów</CardTitle>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline"
-                      onClick={() => setHistoricalDialogOpen(true)}
-                      disabled={participantsList.length === 0}
-                    >
-                      <ClockCounterClockwise size={16} className="mr-2" />
-                      Dodaj przeszły dyżur
-                    </Button>
-                    <Button 
-                      onClick={handleGenerateSchedule}
-                      disabled={participantsList.length < currentSettings.peoplePerShift || isGenerating}
-                    >
-                      <ArrowsClockwise 
-                        size={16} 
-                        className={`mr-2 ${isGenerating ? 'animate-spin' : ''}`} 
-                      />
-                      {currentSchedule.length > 0 ? 'Uzupełnij harmonogram' : 'Generuj harmonogram'}
-                    </Button>
-                  </div>
-                </div>
-                {allShifts.length > 0 && (
-                  <CardDescription>
-                    {currentHistoricalShifts.length > 0 && `${currentHistoricalShifts.length} przeszłych`}
-                    {currentHistoricalShifts.length > 0 && currentSchedule.length > 0 && ' • '}
-                    {currentSchedule.length > 0 && `${currentSchedule.length} zaplanowanych`}
-                    {currentSchedule.length > 0 && ` • ${frequencyLabels[currentSettings.frequency]}`}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                {allShifts.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border bg-muted/20 p-12 text-center">
-                    <CalendarDots className="mx-auto mb-4 text-muted-foreground" size={48} />
-                    <h3 className="mb-2 text-lg font-semibold text-foreground">
-                      Brak harmonogramu
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Skonfiguruj uczestników i ustawienia, a następnie wygeneruj harmonogram dyżurów.
-                    </p>
-                    <Button 
-                      onClick={handleGenerateSchedule}
-                      disabled={participantsList.length < currentSettings.peoplePerShift}
-                    >
-                      <ArrowsClockwise size={16} className="mr-2" />
-                      Generuj harmonogram
-                    </Button>
-                  </div>
-                ) : (
-                  <ScrollArea className="h-[600px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[100px]">#</TableHead>
-                          <TableHead>Data</TableHead>
-                          <TableHead>Uczestnicy</TableHead>
-                          <TableHead className="w-[120px]">Status</TableHead>
-                          <TableHead className="w-[80px]"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {allShifts.map((shift, index) => {
-                          const isHistorical = shift.isHistorical || isPastDate(shift.date)
-                          return (
-                            <TableRow 
-                              key={shift.id}
-                              className={isHistorical ? "opacity-60" : ""}
-                            >
-                              <TableCell className="font-mono font-medium">
-                                {String(index + 1).padStart(2, '0')}
-                              </TableCell>
-                              <TableCell className="font-mono">
-                                <div className="flex items-center gap-2">
-                                  {formatDate(shift.date)}
-                                  {shift.specialDayId && (
-                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
-                                      <Star size={12} weight="fill" className="mr-1" />
-                                      {currentSettings.specialDays.find(sd => sd.id === shift.specialDayId)?.name || 'Dzień specjalny'}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-wrap gap-2">
-                                  {shift.participants.map((participantId) => {
-                                    const participant = participantsList.find(p => p.id === participantId)
-                                    return (
-                                      <Badge 
-                                        key={participantId}
-                                        variant={participant?.hasKeys ? "default" : "secondary"}
-                                        className={participant?.hasKeys ? "bg-accent text-accent-foreground" : ""}
-                                      >
-                                        {participant?.hasKeys && <Key size={12} className="mr-1" />}
-                                        {getParticipantName(participantId)}
-                                      </Badge>
-                                    )
-                                  })}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge 
-                                  variant={isHistorical ? "outline" : "default"}
-                                  className={isHistorical ? "text-muted-foreground" : ""}
-                                >
-                                  {isHistorical ? "Wykonany" : "Zaplanowany"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Button 
-                                  size="icon" 
-                                  variant="ghost"
-                                  onClick={() => handleDeleteShift(shift.id, shift.isHistorical || false)}
-                                >
-                                  <Trash size={16} />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          )
-                        })}
-                      </TableBody>
-                    </Table>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
+              <SchedulePanel
+                participants={participantsState.participants}
+                schedule={scheduleState.schedule}
+                historicalShifts={historyState.historicalShifts}
+                settings={settings}
+                isGenerating={scheduleState.isGenerating}
+                historicalDialogOpen={historyState.dialogOpen}
+                onGenerate={handleGenerate}
+                onDeleteShift={handleDeleteShift}
+                onAddHistorical={handleAddHistorical}
+                onHistoricalDialogChange={historyState.setDialogOpen}
+              />
+            </div>
           </div>
         </div>
-      </div>
-
-      <AddParticipantDialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open)
-          if (!open) setEditingParticipant(undefined)
-        }}
-        onAdd={handleAddParticipant}
-        editParticipant={editingParticipant}
-      />
-
-      <AddHistoricalShiftDialog
-        open={historicalDialogOpen}
-        onOpenChange={setHistoricalDialogOpen}
-        onAdd={handleAddHistoricalShift}
-        participants={participantsList}
-      />
       </div>
     </>
   )
