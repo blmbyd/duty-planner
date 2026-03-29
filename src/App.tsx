@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Table,
@@ -31,8 +30,6 @@ import {
   Plus, 
   Key, 
   ArrowsClockwise, 
-  Download, 
-  Upload,
   Trash,
   Pencil,
   ClockCounterClockwise,
@@ -43,7 +40,7 @@ import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
 import { StatsCard } from '@/components/StatsCard'
 import { SpecialDaysManager } from '@/components/SpecialDaysManager'
 import { Participant, ShiftSettings, Shift, DEFAULT_SETTINGS } from '@/lib/types'
-import { generateSchedule, exportParticipantsToJSON, exportScheduleToJSON, importFromJSON } from '@/lib/schedule-generator'
+import { generateSchedule } from '@/lib/schedule-generator'
 import { motion } from 'framer-motion'
 
 function App() {
@@ -138,39 +135,6 @@ function App() {
     } finally {
       setIsGenerating(false)
     }
-  }
-
-  const handleExportParticipants = () => {
-    exportParticipantsToJSON({ 
-      participants: participantsList, 
-      settings: currentSettings
-    })
-    toast.success('Uczestnicy i ustawienia wyeksportowane')
-  }
-
-  const handleExportSchedule = () => {
-    exportScheduleToJSON({ 
-      schedule: currentSchedule,
-      historicalShifts: currentHistoricalShifts 
-    })
-    toast.success('Harmonogram wyeksportowany')
-  }
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    try {
-      const data = await importFromJSON(file)
-      setParticipants(data.participants || [])
-      setSettings(data.settings || DEFAULT_SETTINGS)
-      setSchedule(data.schedule || [])
-      setHistoricalShifts(data.historicalShifts || [])
-      toast.success('Dane zaimportowane')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Błąd importu')
-    }
-    e.target.value = ''
   }
 
   const handleAddSampleParticipants = async () => {
@@ -429,43 +393,6 @@ function App() {
                   />
                 </div>
 
-                <Separator />
-
-                <div className="flex flex-col gap-2">
-                  <Button 
-                    className="w-full" 
-                    variant="outline"
-                    onClick={handleExportParticipants}
-                    disabled={participantsList.length === 0}
-                  >
-                    <Download size={16} className="mr-2" />
-                    Eksport: Uczestnicy + Ustawienia
-                  </Button>
-                  <Button 
-                    className="w-full" 
-                    variant="outline"
-                    onClick={handleExportSchedule}
-                    disabled={currentSchedule.length === 0 && currentHistoricalShifts.length === 0}
-                  >
-                    <Download size={16} className="mr-2" />
-                    Eksport: Harmonogram
-                  </Button>
-                  <Button 
-                    className="w-full" 
-                    variant="outline"
-                    onClick={() => document.getElementById('import-file')?.click()}
-                  >
-                    <Upload size={16} className="mr-2" />
-                    Import
-                  </Button>
-                  <input
-                    id="import-file"
-                    type="file"
-                    accept=".json"
-                    className="hidden"
-                    onChange={handleImport}
-                  />
-                </div>
               </CardContent>
             </Card>
 
