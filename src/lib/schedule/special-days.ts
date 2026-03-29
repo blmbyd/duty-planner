@@ -1,4 +1,5 @@
 import { SpecialDay, SpecialDayDayOfWeek, SpecialDayWeekOccurrence } from '../types'
+import { formatLocalDate } from './date-utils'
 
 export interface SpecialDayOccurrence {
   date: string
@@ -76,7 +77,7 @@ export function getSpecialDaysInRange(
       const date = getSpecialDayForMonth(currentMonth, specialDay.weekOccurrence, specialDay.dayOfWeek)
       if (date && date >= start && date <= end) {
         occurrences.push({
-          date: date.toISOString().split('T')[0],
+          date: formatLocalDate(date),
           specialDayId: specialDay.id,
           peopleCount: specialDay.peopleCount,
         })

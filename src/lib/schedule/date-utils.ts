@@ -1,5 +1,12 @@
 import { ShiftSettings } from '../types'
 
+export function formatLocalDate(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 export function getDaysBetweenDates(
   startDate: string,
   endDate: string,
@@ -27,7 +34,7 @@ export function getDaysBetweenDates(
 
   let current = new Date(start)
   while (current <= end) {
-    dates.push(current.toISOString().split('T')[0])
+    dates.push(formatLocalDate(current))
     current = new Date(current.getTime() + increment * 24 * 60 * 60 * 1000)
   }
 

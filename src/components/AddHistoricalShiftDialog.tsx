@@ -11,6 +11,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Participant, Shift } from '@/lib/types'
+import { formatLocalDate } from '@/lib/schedule/date-utils'
 import { Badge } from '@/components/ui/badge'
 import { Key, X } from '@phosphor-icons/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -28,12 +29,12 @@ export function AddHistoricalShiftDialog({
   onAdd,
   participants 
 }: AddHistoricalShiftDialogProps) {
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(formatLocalDate(new Date()))
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([])
 
   useEffect(() => {
     if (open) {
-      setDate(new Date().toISOString().split('T')[0])
+      setDate(formatLocalDate(new Date()))
       setSelectedParticipants([])
     }
   }, [open])
@@ -55,7 +56,7 @@ export function AddHistoricalShiftDialog({
       participants: selectedParticipants,
     })
 
-    setDate(new Date().toISOString().split('T')[0])
+    setDate(formatLocalDate(new Date()))
     setSelectedParticipants([])
     onOpenChange(false)
   }
@@ -77,7 +78,7 @@ export function AddHistoricalShiftDialog({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
+              max={formatLocalDate(new Date())}
             />
           </div>
           

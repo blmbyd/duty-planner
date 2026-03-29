@@ -39,10 +39,14 @@ export interface AppData {
   historicalShifts: Shift[]
 }
 
+function _fmt(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export const DEFAULT_SETTINGS: ShiftSettings = {
   frequency: 'weekly',
   peoplePerShift: 2,
-  startDate: new Date().toISOString().split('T')[0],
-  endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  startDate: _fmt(new Date()),
+  endDate: _fmt(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
   specialDays: []
 }
