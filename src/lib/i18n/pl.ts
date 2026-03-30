@@ -9,6 +9,10 @@ export const pl: Translations = {
       noKeyHolder: 'Dodaj przynajmniej jedna osobe z kluczami',
       scheduleAdded: (count, total) =>
         `Dodano ${count} nowych dyzurow (lacznie: ${total})`,
+      scheduleUpdated: (count, total) =>
+        `Uzupelniono ${count} istniejacych dyzurow (lacznie: ${total})`,
+      scheduleAddedAndUpdated: (added, updated, total) =>
+        `Dodano ${added} nowych i uzupelniono ${updated} istniejacych dyzurow (lacznie: ${total})`,
       scheduleComplete: 'Harmonogram jest juz kompletny',
       scheduleError: 'Blad generowania harmonogramu',
       participantUpdated: 'Uczestnik zaktualizowany',
@@ -34,6 +38,10 @@ export const pl: Translations = {
     addManualBtn: 'Dodaj dyzur',
     generateBtn: 'Generuj harmonogram',
     refillBtn: 'Uzupelnij harmonogram',
+    fillMode: {
+      label: 'Uzupelnij brakujace osoby',
+      desc: 'Dopelnia sklad istniejacych dyzurow, jesli brakuje osob lub osoby z kluczami.',
+    },
     historical: (count) => `${count} przeszlych`,
     manual: (count) => `${count} recznych`,
     planned: (count) => `${count} zaplanowanych`,

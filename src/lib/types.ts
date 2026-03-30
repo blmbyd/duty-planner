@@ -40,6 +40,8 @@ export interface AppData {
   manualShifts: Shift[]
 }
 
+export type FillMode = 'fill-missing-people' | 'ignore-existing-positions'
+
 function _fmt(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }

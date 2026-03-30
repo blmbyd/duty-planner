@@ -8,6 +8,8 @@ export interface Translations {
       tooFewParticipants: string
       noKeyHolder: string
       scheduleAdded: (count: number, total: number) => string
+      scheduleUpdated: (count: number, total: number) => string
+      scheduleAddedAndUpdated: (added: number, updated: number, total: number) => string
       scheduleComplete: string
       scheduleError: string
       participantUpdated: string
@@ -33,6 +35,10 @@ export interface Translations {
     addManualBtn: string
     generateBtn: string
     refillBtn: string
+    fillMode: {
+      label: string
+      desc: string
+    }
     historical: (count: number) => string
     manual: (count: number) => string
     planned: (count: number) => string

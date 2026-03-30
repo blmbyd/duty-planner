@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -19,7 +22,7 @@ import {
   Star,
   PencilSimple,
 } from '@phosphor-icons/react'
-import { Participant, Shift, ShiftSettings } from '@/lib/types'
+import { Participant, Shift, ShiftSettings, FillMode } from '@/lib/types'
 import { formatDate, isPastDate } from '@/lib/schedule/date-utils'
 import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
 import { AddShiftDialog } from '@/components/AddShiftDialog'
@@ -34,7 +37,7 @@ interface SchedulePanelProps {
   isGenerating: boolean
   historicalDialogOpen: boolean
   manualDialogOpen: boolean
-  onGenerate: () => void
+  onGenerate: (fillMode: FillMode) => void
   onDeleteShift: (id: string, isHistorical: boolean, isManual: boolean) => void
   onAddHistorical: (shift: Shift) => void
   onAddManual: (shift: Shift) => 'ok' | 'conflict'
@@ -59,6 +62,7 @@ export function SchedulePanel({
   onManualDialogChange,
 }: SchedulePanelProps) {
   const { t, locale } = useTranslation()
+  const [fillMode, setFillMode] = useState<FillMode>('ignore-existing-positions')
 
   const allShifts = [...historicalShifts, ...manualShifts, ...schedule].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -95,7 +99,7 @@ export function SchedulePanel({
                 {t.schedule.addManualBtn}
               </Button>
               <Button
-                onClick={onGenerate}
+                onClick={() => onGenerate(fillMode)}
                 disabled={
                   participants.length < settings.peoplePerShift || isGenerating
                 }
@@ -108,6 +112,18 @@ export function SchedulePanel({
               </Button>
             </div>
           </div>
+          <div className="flex items-center gap-2 pt-1">
+              <Switch
+                id="fill-mode"
+                checked={fillMode === 'fill-missing-people'}
+                onCheckedChange={(checked) =>
+                  setFillMode(checked ? 'fill-missing-people' : 'ignore-existing-positions')
+                }
+              />
+              <Label htmlFor="fill-mode" className="cursor-pointer text-sm font-normal">
+                {t.schedule.fillMode.label}
+              </Label>
+            </div>
           {allShifts.length > 0 && (
             <CardDescription>
               {historicalShifts.length > 0 && t.schedule.historical(historicalShifts.length)}
@@ -128,7 +144,7 @@ export function SchedulePanel({
                 {t.schedule.empty.desc}
               </p>
               <Button
-                onClick={onGenerate}
+                onClick={() => onGenerate(fillMode)}
                 disabled={participants.length < settings.peoplePerShift}
               >
                 <ArrowsClockwise size={16} className="mr-2" />

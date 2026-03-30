@@ -14,6 +14,7 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 - Pozwala ręcznie dodać dyżur na dowolną datę — z przeszłości lub przyszłości — który blokuje termin i wpływa na sprawiedliwość planowania.
 - Blokuje dodanie ręcznego dyżuru, jeśli dana data jest już zajęta w harmonogramie lub wśród wcześniej dodanych wpisów ręcznych.
 - Zachowuje istniejące wpisy harmonogramu i przy ponownym generowaniu uzupełnia tylko brakujące daty.
+- Oferuje dwa tryby uzupełniania harmonogramu: domyślny tryb ignoruje istniejące pozycje i dodaje tylko nowe daty, a tryb uzupełniania brakujących osób wykrywa niekompletne dyżury i dopisuje do nich brakującą obsadę (osoby z kluczami i dodatkowych uczestników).
 - Pokazuje lekkie statystyki udziału uczestników dla dyżurów planowanych i historycznych.
 - Eksportuje i importuje pełny stan aplikacji jako JSON.
 
@@ -34,6 +35,7 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 - Blokuje generowanie, gdy uczestników jest mniej niż wymagana liczba osób na dyżurze.
 - Blokuje generowanie, gdy na liście uczestników nie ma żadnej osoby z kluczami.
 - Wykorzystuje istniejące wpisy harmonogramu i dodaje tylko brakujące wymagane daty.
+- W trybie uzupełniania brakujących osób sprawdza, czy każdy istniejący dyżur ma właściwy skład: zwykły dyżur wymaga co najmniej jednej osoby z kluczami i wymaganej liczby uczestników, dzień specjalny wymaga liczby osób zgodnej z konfiguracją. Niekompletne dyżury są uzupełniane bez zmiany już przypisanych uczestników.
 - Łączy dyżury historyczne, ręczne i już zaplanowane podczas obliczania sprawiedliwości przydziału.
 - Wyklucza daty zajęte przez ręczne dyżury z puli generowanych terminów — ręczne wpisy nie są nadpisywane.
 - Tworzy wiele kandydatów harmonogramu i zachowuje najlepiej oceniony wynik.

@@ -1,7 +1,13 @@
-import { Participant, ShiftSettings, Shift } from '../types'
+import { Participant, ShiftSettings, Shift, FillMode } from '../types'
 import { getDaysBetweenDates } from './date-utils'
 import { getSpecialDaysInRange, SpecialDayOccurrence } from './special-days'
 import { shuffleArray, scoreSchedule } from './scoring'
+
+export interface GenerateResult {
+  schedule: Shift[]
+  newDatesCount: number
+  updatedShiftsCount: number
+}
 
 function buildShiftForSpecialDay(
   date: string,
@@ -144,8 +150,9 @@ export function generateSchedule(
   settings: ShiftSettings,
   historicalShifts: Shift[] = [],
   existingSchedule: Shift[] = [],
-  manualShifts: Shift[] = []
-): Shift[] {
+  manualShifts: Shift[] = [],
+  fillMode: FillMode = 'ignore-existing-positions'
+): GenerateResult {
   const safeSettings: ShiftSettings = {
     ...settings,
     specialDays: Array.isArray(settings.specialDays) ? settings.specialDays : [],
@@ -178,8 +185,25 @@ export function generateSchedule(
     (date) => !existingDatesSet.has(date) && !manualDatesSet.has(date)
   )
 
-  if (missingDates.length === 0) {
-    return existingSchedule
+  const incompleteShiftDates = new Set<string>()
+  if (fillMode === 'fill-missing-people') {
+    for (const shift of existingSchedule) {
+      if (manualDatesSet.has(shift.date)) continue
+      const specialDayOcc = specialDaysMap.get(shift.date)
+      const requiredCount = specialDayOcc
+        ? specialDayOcc.peopleCount
+        : safeSettings.peoplePerShift
+      const hasKeyHolder = specialDayOcc
+        ? true
+        : shift.participants.some((id) => specialPeople.some((p) => p.id === id))
+      if (shift.participants.length < requiredCount || (!specialDayOcc && !hasKeyHolder)) {
+        incompleteShiftDates.add(shift.date)
+      }
+    }
+  }
+
+  if (missingDates.length === 0 && incompleteShiftDates.size === 0) {
+    return { schedule: existingSchedule, newDatesCount: 0, updatedShiftsCount: 0 }
   }
 
   const allHistoricalShifts = [...historicalShifts, ...manualShifts, ...existingSchedule]
@@ -267,7 +291,72 @@ export function generateSchedule(
     }
   }
 
-  return [...existingSchedule, ...bestNewShifts].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
+  const filledExistingShifts: Shift[] = []
+  let updatedShiftsCount = 0
+
+  if (fillMode === 'fill-missing-people' && incompleteShiftDates.size > 0) {
+    const fillCounts = new Map<string, number>()
+    participants.forEach((p) => fillCounts.set(p.id, 0))
+    ;[...historicalShifts, ...manualShifts, ...existingSchedule, ...bestNewShifts].forEach(
+      (shift) => {
+        shift.participants.forEach((id) => {
+          if (fillCounts.has(id)) {
+            fillCounts.set(id, (fillCounts.get(id) || 0) + 1)
+          }
+        })
+      }
+    )
+
+    for (const shift of existingSchedule) {
+      if (!incompleteShiftDates.has(shift.date)) {
+        filledExistingShifts.push(shift)
+        continue
+      }
+
+      const specialDayOcc = specialDaysMap.get(shift.date)
+      const requiredCount = specialDayOcc
+        ? specialDayOcc.peopleCount
+        : safeSettings.peoplePerShift
+      const currentParticipants = [...shift.participants]
+
+      if (!specialDayOcc) {
+        const hasKeyHolder = currentParticipants.some((id) =>
+          specialPeople.some((p) => p.id === id)
+        )
+        if (!hasKeyHolder) {
+          const available = shuffleArray(
+            specialPeople.filter((p) => !currentParticipants.includes(p.id))
+          ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
+          if (available.length > 0) {
+            currentParticipants.push(available[0].id)
+            fillCounts.set(available[0].id, (fillCounts.get(available[0].id) || 0) + 1)
+          }
+        }
+      }
+
+      if (currentParticipants.length < requiredCount) {
+        const available = shuffleArray(
+          participants.filter((p) => !currentParticipants.includes(p.id))
+        ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
+        for (const person of available) {
+          if (currentParticipants.length >= requiredCount) break
+          currentParticipants.push(person.id)
+          fillCounts.set(person.id, (fillCounts.get(person.id) || 0) + 1)
+        }
+      }
+
+      filledExistingShifts.push({ ...shift, participants: currentParticipants })
+      updatedShiftsCount++
+    }
+  } else {
+    filledExistingShifts.push(...existingSchedule)
+  }
+
+  return {
+    schedule: [...filledExistingShifts, ...bestNewShifts].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    ),
+    newDatesCount: bestNewShifts.length,
+    updatedShiftsCount,
+  }
 }

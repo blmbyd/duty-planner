@@ -122,6 +122,7 @@ Generator musi:
 - wyliczać wszystkie wymagane daty na podstawie bazowej częstotliwości i skonfigurowanych dni specjalnych,
 - zachowywać wcześniej wygenerowane wpisy harmonogramu,
 - dodawać wyłącznie brakujące dyżury,
+- w trybie uzupełniania brakujących osób wykrywać niekompletne istniejące dyżury i dopisywać do nich brakującą obsadę bez nadpisywania już przypisanych uczestników,
 - zwracać kompletny, uporządkowany harmonogram dla zadanego okresu.
 
 Wymagania behawioralne:
@@ -134,10 +135,12 @@ Wymagania behawioralne:
 
 Kryteria akceptacji:
 
-- Istniejące wpisy harmonogramu pozostają niezmienione po ponownym generowaniu.
+- Istniejące wpisy harmonogramu z poprawną obsadą pozostają niezmienione po ponownym generowaniu.
 - Nowe dyżury są dodawane wyłącznie dla brakujących dat.
+- W trybie uzupełniania brakujących osób: dyżur jest uznawany za niekompletny, gdy zwykły dyżur nie posiada wymaganej liczby uczestników lub nie ma osoby z kluczami, a dzień specjalny ma mniej osób niż zdefiniowana liczba uczestników dla danego dnia.
+- Tryb uzupełniania jest wybierany przez użytkownika za pomocą przełącznika widocznego w panelu harmonogramu, gdy harmonogram już istnieje.
 - Wynikowy harmonogram jest posortowany chronologicznie.
-- Użytkownik otrzymuje po generowaniu komunikat sukcesu, informacji albo błędu.
+- Użytkownik otrzymuje po generowaniu komunikat sukcesu, informacji albo błędu — oddzielnie dla nowych dat, uzupełnionych istniejących dyżurów lub braku zmian.
 
 ### 6. Przegląd harmonogramu
 

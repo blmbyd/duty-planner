@@ -10,7 +10,7 @@ import { SettingsPanel } from '@/components/SettingsPanel'
 import { SchedulePanel } from '@/components/SchedulePanel'
 import { StatsCard } from '@/components/StatsCard'
 import { SpecialDaysManager } from '@/components/SpecialDaysManager'
-import { Participant, Shift } from '@/lib/types'
+import { Participant, Shift, FillMode } from '@/lib/types'
 import { exportBackup, parseBackup } from '@/lib/backup'
 import { useTranslation } from '@/lib/i18n'
 
@@ -22,7 +22,7 @@ function App() {
   const historyState = useHistoricalShifts()
   const manualState = useManualShifts()
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (fillMode: FillMode) => {
     const { participants } = participantsState
     if (participants.length < settings.peoplePerShift) {
       toast.error(t.app.toast.tooFewParticipants)
@@ -33,14 +33,19 @@ function App() {
       return
     }
     try {
-      const { added, total } = await scheduleState.generate(
+      const { added, updated, total } = await scheduleState.generate(
         participants,
         settings,
         historyState.historicalShifts,
-        manualState.manualShifts
+        manualState.manualShifts,
+        fillMode
       )
-      if (added > 0) {
+      if (added > 0 && updated > 0) {
+        toast.success(t.app.toast.scheduleAddedAndUpdated(added, updated, total))
+      } else if (added > 0) {
         toast.success(t.app.toast.scheduleAdded(added, total))
+      } else if (updated > 0) {
+        toast.success(t.app.toast.scheduleUpdated(updated, total))
       } else {
         toast.info(t.app.toast.scheduleComplete)
       }

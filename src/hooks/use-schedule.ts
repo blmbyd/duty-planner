@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useLocalStorage } from './use-local-storage'
-import { Shift, Participant, ShiftSettings } from '@/lib/types'
+import { Shift, Participant, ShiftSettings, FillMode } from '@/lib/types'
 import { generateSchedule } from '@/lib/schedule-generator'
 
 export function useSchedule() {
@@ -14,21 +14,26 @@ export function useSchedule() {
       participants: Participant[],
       settings: ShiftSettings,
       historicalShifts: Shift[],
-      manualShifts: Shift[]
-    ): Promise<{ added: number; total: number }> => {
+      manualShifts: Shift[],
+      fillMode: FillMode = 'ignore-existing-positions'
+    ): Promise<{ added: number; updated: number; total: number }> => {
       setIsGenerating(true)
       try {
         await new Promise<void>((resolve) => setTimeout(resolve, 500))
-        const newSchedule = generateSchedule(
+        const result = generateSchedule(
           participants,
           settings,
           historicalShifts,
           currentSchedule,
-          manualShifts
+          manualShifts,
+          fillMode
         )
-        const added = newSchedule.length - currentSchedule.length
-        setSchedule(newSchedule)
-        return { added, total: newSchedule.length }
+        setSchedule(result.schedule)
+        return {
+          added: result.newDatesCount,
+          updated: result.updatedShiftsCount,
+          total: result.schedule.length,
+        }
       } finally {
         setIsGenerating(false)
       }
