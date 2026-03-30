@@ -16,7 +16,7 @@ export function useSchedule() {
       historicalShifts: Shift[],
       manualShifts: Shift[],
       fillMode: FillMode = 'ignore-existing-positions'
-    ): Promise<{ added: number; updated: number; total: number }> => {
+    ): Promise<{ added: number; updated: number; total: number; updatedManualShifts: import('@/lib/types').Shift[] }> => {
       setIsGenerating(true)
       try {
         await new Promise<void>((resolve) => setTimeout(resolve, 500))
@@ -33,6 +33,7 @@ export function useSchedule() {
           added: result.newDatesCount,
           updated: result.updatedShiftsCount,
           total: result.schedule.length,
+          updatedManualShifts: result.updatedManualShifts,
         }
       } finally {
         setIsGenerating(false)

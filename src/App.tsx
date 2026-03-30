@@ -33,13 +33,14 @@ function App() {
       return
     }
     try {
-      const { added, updated, total } = await scheduleState.generate(
+      const { added, updated, total, updatedManualShifts } = await scheduleState.generate(
         participants,
         settings,
         historyState.historicalShifts,
         manualState.manualShifts,
         fillMode
       )
+      manualState.replace(updatedManualShifts)
       if (added > 0 && updated > 0) {
         toast.success(t.app.toast.scheduleAddedAndUpdated(added, updated, total))
       } else if (added > 0) {
