@@ -143,7 +143,8 @@ export function generateSchedule(
   participants: Participant[],
   settings: ShiftSettings,
   historicalShifts: Shift[] = [],
-  existingSchedule: Shift[] = []
+  existingSchedule: Shift[] = [],
+  manualShifts: Shift[] = []
 ): Shift[] {
   const safeSettings: ShiftSettings = {
     ...settings,
@@ -170,15 +171,18 @@ export function generateSchedule(
   const specialDaysMap = new Map(specialDayOccurrences.map((occ) => [occ.date, occ]))
 
   const existingDatesSet = new Set(existingSchedule.map((s) => s.date))
+  const manualDatesSet = new Set(manualShifts.map((s) => s.date))
   const specialDayDates = specialDayOccurrences.map((occ) => occ.date)
   const allRequiredDates = [...new Set([...allDates, ...specialDayDates])].sort()
-  const missingDates = allRequiredDates.filter((date) => !existingDatesSet.has(date))
+  const missingDates = allRequiredDates.filter(
+    (date) => !existingDatesSet.has(date) && !manualDatesSet.has(date)
+  )
 
   if (missingDates.length === 0) {
     return existingSchedule
   }
 
-  const allHistoricalShifts = [...historicalShifts, ...existingSchedule]
+  const allHistoricalShifts = [...historicalShifts, ...manualShifts, ...existingSchedule]
 
   let bestNewShifts: Shift[] = []
   let bestScore = -Infinity

@@ -13,7 +13,8 @@ export function useSchedule() {
     async (
       participants: Participant[],
       settings: ShiftSettings,
-      historicalShifts: Shift[]
+      historicalShifts: Shift[],
+      manualShifts: Shift[]
     ): Promise<{ added: number; total: number }> => {
       setIsGenerating(true)
       try {
@@ -22,7 +23,8 @@ export function useSchedule() {
           participants,
           settings,
           historicalShifts,
-          currentSchedule
+          currentSchedule,
+          manualShifts
         )
         const added = newSchedule.length - currentSchedule.length
         setSchedule(newSchedule)

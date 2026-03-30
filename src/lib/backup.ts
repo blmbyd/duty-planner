@@ -75,5 +75,6 @@ export function parseBackup(raw: string): AppData {
     },
     schedule: obj.schedule as AppData['schedule'],
     historicalShifts: obj.historicalShifts as AppData['historicalShifts'],
+    manualShifts: Array.isArray(obj.manualShifts) ? obj.manualShifts as AppData['manualShifts'] : [],
   }
 }

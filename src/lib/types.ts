@@ -37,6 +37,7 @@ export interface AppData {
   settings: ShiftSettings
   schedule: Shift[]
   historicalShifts: Shift[]
+  manualShifts: Shift[]
 }
 
 function _fmt(d: Date): string {

@@ -17,46 +17,63 @@ import {
   Trash,
   Key,
   Star,
+  PencilSimple,
 } from '@phosphor-icons/react'
 import { Participant, Shift, ShiftSettings } from '@/lib/types'
 import { formatDate, isPastDate } from '@/lib/schedule/date-utils'
 import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
+import { AddShiftDialog } from '@/components/AddShiftDialog'
 import { useTranslation } from '@/lib/i18n'
 
 interface SchedulePanelProps {
   participants: Participant[]
   schedule: Shift[]
   historicalShifts: Shift[]
+  manualShifts: Shift[]
   settings: ShiftSettings
   isGenerating: boolean
   historicalDialogOpen: boolean
+  manualDialogOpen: boolean
   onGenerate: () => void
-  onDeleteShift: (id: string, isHistorical: boolean) => void
+  onDeleteShift: (id: string, isHistorical: boolean, isManual: boolean) => void
   onAddHistorical: (shift: Shift) => void
+  onAddManual: (shift: Shift) => 'ok' | 'conflict'
   onHistoricalDialogChange: (open: boolean) => void
+  onManualDialogChange: (open: boolean) => void
 }
 
 export function SchedulePanel({
   participants,
   schedule,
   historicalShifts,
+  manualShifts,
   settings,
   isGenerating,
   historicalDialogOpen,
+  manualDialogOpen,
   onGenerate,
   onDeleteShift,
   onAddHistorical,
+  onAddManual,
   onHistoricalDialogChange,
+  onManualDialogChange,
 }: SchedulePanelProps) {
   const { t, locale } = useTranslation()
 
-  const allShifts = [...historicalShifts, ...schedule].sort(
+  const allShifts = [...historicalShifts, ...manualShifts, ...schedule].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
 
   const getParticipantName = (id: string) => {
     const p = participants.find((p) => p.id === id)
     return p ? `${p.firstName} ${p.lastName}` : t.schedule.unknown
+  }
+
+  const getRowStatus = (shift: Shift): 'historical' | 'manual' | 'planned' => {
+    if (shift.isHistorical || (isPastDate(shift.date) && !manualShifts.some((m) => m.id === shift.id)))
+      return 'historical'
+    if (manualShifts.some((m) => m.id === shift.id)) return 'manual'
+    return 'planned'
   }
 
   return (
@@ -71,11 +88,11 @@ export function SchedulePanel({
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => onHistoricalDialogChange(true)}
+                onClick={() => onManualDialogChange(true)}
                 disabled={participants.length === 0}
               >
-                <ClockCounterClockwise size={16} className="mr-2" />
-                {t.schedule.addHistoricalBtn}
+                <PencilSimple size={16} className="mr-2" />
+                {t.schedule.addManualBtn}
               </Button>
               <Button
                 onClick={onGenerate}
@@ -94,7 +111,9 @@ export function SchedulePanel({
           {allShifts.length > 0 && (
             <CardDescription>
               {historicalShifts.length > 0 && t.schedule.historical(historicalShifts.length)}
-              {historicalShifts.length > 0 && schedule.length > 0 && ' \u2022 '}
+              {historicalShifts.length > 0 && (manualShifts.length > 0 || schedule.length > 0) && ' \u2022 '}
+              {manualShifts.length > 0 && t.schedule.manual(manualShifts.length)}
+              {manualShifts.length > 0 && schedule.length > 0 && ' \u2022 '}
               {schedule.length > 0 && t.schedule.planned(schedule.length)}
               {schedule.length > 0 && ` \u2022 ${t.schedule.frequency[settings.frequency]}`}
             </CardDescription>
@@ -130,11 +149,12 @@ export function SchedulePanel({
                 </TableHeader>
                 <TableBody>
                   {allShifts.map((shift, index) => {
-                    const isHistorical = shift.isHistorical || isPastDate(shift.date)
+                    const rowStatus = getRowStatus(shift)
+                    const isDimmed = rowStatus === 'historical'
                     return (
                       <TableRow
                         key={shift.id}
-                        className={isHistorical ? 'opacity-60' : ''}
+                        className={isDimmed ? 'opacity-60' : ''}
                       >
                         <TableCell className="font-mono font-medium">
                           {String(index + 1).padStart(2, '0')}
@@ -181,19 +201,32 @@ export function SchedulePanel({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant={isHistorical ? 'outline' : 'default'}
-                            className={isHistorical ? 'text-muted-foreground' : ''}
-                          >
-                            {isHistorical ? t.schedule.status.done : t.schedule.status.planned}
-                          </Badge>
+                          {rowStatus === 'historical' && (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              {t.schedule.status.done}
+                            </Badge>
+                          )}
+                          {rowStatus === 'manual' && (
+                            <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50">
+                              {t.schedule.status.manual}
+                            </Badge>
+                          )}
+                          {rowStatus === 'planned' && (
+                            <Badge variant="default">
+                              {t.schedule.status.planned}
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Button
                             size="icon"
                             variant="ghost"
                             onClick={() =>
-                              onDeleteShift(shift.id, shift.isHistorical || false)
+                              onDeleteShift(
+                                shift.id,
+                                rowStatus === 'historical',
+                                rowStatus === 'manual'
+                              )
                             }
                           >
                             <Trash size={16} />
@@ -215,6 +248,14 @@ export function SchedulePanel({
         onAdd={onAddHistorical}
         participants={participants}
       />
+
+      <AddShiftDialog
+        open={manualDialogOpen}
+        onOpenChange={onManualDialogChange}
+        onAdd={onAddManual}
+        participants={participants}
+      />
     </>
   )
 }
+

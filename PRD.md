@@ -99,15 +99,19 @@ Kryteria akceptacji:
 - Wystąpienia dni specjalnych mieszczące się w wybranym zakresie dat są uwzględniane w zbiorze wymaganych dat harmonogramu.
 - Dni specjalne mogą wymagać innej liczby osób niż zwykłe dyżury.
 
-### 4. Historyczne dyżury
+### 4. Dyżury ręczne i historyczne
 
-Użytkownik musi móc dodawać i usuwać historyczne dyżury.
+Użytkownik musi móc dodawać i usuwać historyczne dyżury z przeszłości.
+Użytkownik musi móc dodawać i usuwać ręczne dyżury na dowolną datę — z przeszłości lub przyszłości.
 
 Kryteria akceptacji:
 
 - Historyczne dyżury wpływają na sprawiedliwość przyszłego generowania harmonogramu.
-- Historyczne dyżury są wizualnie odróżnione od nadchodzących dyżurów planowanych.
-- Dane historyczne są uwzględniane w eksporcie i imporcie.
+- Ręczne dyżury blokują termin i są uwzględniane przez generator — data zajęta przez ręczny wpis nie jest generowana ponownie.
+- Ręczne dyżury wpływają na obliczanie sprawiedliwości obciążeń uczestników.
+- Dodanie ręcznego dyżuru na datę już zajętą w harmonogramie lub wśród istniejących ręcznych wpisów jest blokowane z czytelnym komunikatem błędu.
+- Historyczne dyżury i ręczne dyżury są wizualnie odróżnione od siebie i od nadchodzących dyżurów planowanych.
+- Oba typy danych są uwzględniane w eksporcie i imporcie.
 
 ### 5. Generowanie harmonogramu
 

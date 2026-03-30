@@ -11,6 +11,8 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 - Wymaga obecności co najmniej jednej osoby z kluczami na każdym zwykłym dyżurze.
 - Obsługuje comiesięczne dni specjalne, takie jak drugi poniedziałek albo ostatni piątek miesiąca, z własną liczbą osób na dyżurze.
 - Uwzględnia historyczne dyżury, aby wcześniejsze przydziały wpływały na przyszłe wyrównanie obciążenia.
+- Pozwala ręcznie dodać dyżur na dowolną datę — z przeszłości lub przyszłości — który blokuje termin i wpływa na sprawiedliwość planowania.
+- Blokuje dodanie ręcznego dyżuru, jeśli dana data jest już zajęta w harmonogramie lub wśród wcześniej dodanych wpisów ręcznych.
 - Zachowuje istniejące wpisy harmonogramu i przy ponownym generowaniu uzupełnia tylko brakujące daty.
 - Pokazuje lekkie statystyki udziału uczestników dla dyżurów planowanych i historycznych.
 - Eksportuje i importuje pełny stan aplikacji jako JSON.
@@ -21,8 +23,9 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 2. Skonfiguruj częstotliwość dyżurów, liczbę osób na dyżurze oraz zakres dat.
 3. Opcjonalnie zdefiniuj powtarzalne dni specjalne z inną liczbą osób.
 4. Opcjonalnie dodaj historyczne dyżury, aby zachować ciągłość sprawiedliwego rozkładu.
-5. Wygeneruj lub uzupełnij harmonogram.
-6. W razie potrzeby wyeksportuj stan do pliku kopii zapasowej.
+5. Opcjonalnie dodaj ręczne dyżury na konkretne daty (w przeszłości lub przyszłości), które mają być trwale wpisane w harmonogram i chronione przed nadpisaniem przez generator.
+6. Wygeneruj lub uzupełnij harmonogram.
+7. W razie potrzeby wyeksportuj stan do pliku kopii zapasowej.
 
 ## Zasady planowania
 
@@ -31,7 +34,8 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 - Blokuje generowanie, gdy uczestników jest mniej niż wymagana liczba osób na dyżurze.
 - Blokuje generowanie, gdy na liście uczestników nie ma żadnej osoby z kluczami.
 - Wykorzystuje istniejące wpisy harmonogramu i dodaje tylko brakujące wymagane daty.
-- Łączy dyżury historyczne i już zaplanowane podczas obliczania sprawiedliwości przydziału.
+- Łączy dyżury historyczne, ręczne i już zaplanowane podczas obliczania sprawiedliwości przydziału.
+- Wyklucza daty zajęte przez ręczne dyżury z puli generowanych terminów — ręczne wpisy nie są nadpisywane.
 - Tworzy wiele kandydatów harmonogramu i zachowuje najlepiej oceniony wynik.
 - Preferuje osoby z mniejszą liczbą przydziałów i w miarę możliwości unika natychmiastowych powtórzeń tych samych osób.
 - Dodaje wystąpienia dni specjalnych do zbioru wymaganych dat nawet wtedy, gdy nie wynikają one z bazowej częstotliwości.
@@ -40,8 +44,9 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 
 - Bieżące dane są przechowywane w local storage przeglądarki.
 - Eksport tworzy wersjonowany plik kopii zapasowej JSON o nazwie w stylu `duty-planner-backup-YYYY-MM-DD.json`.
-- Import przywraca uczestników, ustawienia, planowany harmonogram oraz historyczne dyżury.
+- Import przywraca uczestników, ustawienia, planowany harmonogram, historyczne dyżury oraz ręczne dyżury.
 - Import całkowicie zastępuje bieżący stan zapisany w przeglądarce.
+- Pliki eksportowane w poprzednich wersjach aplikacji (bez pola `manualShifts`) są nadal obsługiwane — brakujące pole jest uzupełniane pustą tablicą.
 - Preferencja językowa jest przechowywana oddzielnie w local storage pod kluczem `duty-planner:v1:language`.
 
 ## Wielojęzyczność

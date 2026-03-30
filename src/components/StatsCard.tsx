@@ -10,6 +10,7 @@ interface StatsCardProps {
   participants: Participant[]
   schedule: Shift[]
   historicalShifts?: Shift[]
+  manualShifts?: Shift[]
 }
 
 interface ParticipantStats {
@@ -24,17 +25,18 @@ interface ParticipantStats {
   percentage: number
 }
 
-export function StatsCard({ participants, schedule, historicalShifts = [] }: StatsCardProps) {
+export function StatsCard({ participants, schedule, historicalShifts = [], manualShifts = [] }: StatsCardProps) {
   const { t } = useTranslation()
   const calculateStats = (): ParticipantStats[] => {
-    const allShifts = [...schedule, ...historicalShifts]
+    const allContextShifts = [...historicalShifts, ...manualShifts]
+    const allShifts = [...schedule, ...allContextShifts]
     
     const stats = participants.map(participant => {
       const shiftsCount = schedule.filter(shift => 
         shift.participants.includes(participant.id)
       ).length
 
-      const historicalCount = historicalShifts.filter(shift => 
+      const historicalCount = allContextShifts.filter(shift => 
         shift.participants.includes(participant.id)
       ).length
       
@@ -62,7 +64,7 @@ export function StatsCard({ participants, schedule, historicalShifts = [] }: Sta
 
   const stats = calculateStats()
   const totalShifts = schedule.length
-  const totalHistorical = historicalShifts.length
+  const totalHistorical = historicalShifts.length + manualShifts.length
   const avgShiftsPerPerson = stats.length > 0 
     ? stats.reduce((sum, s) => sum + s.totalCount, 0) / stats.length 
     : 0
