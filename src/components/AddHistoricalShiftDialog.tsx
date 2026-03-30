@@ -22,13 +22,15 @@ interface AddHistoricalShiftDialogProps {
   onOpenChange: (open: boolean) => void
   onAdd: (shift: Shift) => void
   participants: Participant[]
+  editShift?: Shift
 }
 
 export function AddHistoricalShiftDialog({ 
   open, 
   onOpenChange, 
   onAdd,
-  participants 
+  participants,
+  editShift,
 }: AddHistoricalShiftDialogProps) {
   const { t } = useTranslation()
   const [date, setDate] = useState(formatLocalDate(new Date()))
@@ -36,10 +38,15 @@ export function AddHistoricalShiftDialog({
 
   useEffect(() => {
     if (open) {
-      setDate(formatLocalDate(new Date()))
-      setSelectedParticipants([])
+      if (editShift) {
+        setDate(editShift.date)
+        setSelectedParticipants(editShift.participants)
+      } else {
+        setDate(formatLocalDate(new Date()))
+        setSelectedParticipants([])
+      }
     }
-  }, [open])
+  }, [open, editShift])
 
   const handleToggleParticipant = (participantId: string) => {
     setSelectedParticipants(current => 
@@ -53,7 +60,7 @@ export function AddHistoricalShiftDialog({
     if (!date || selectedParticipants.length === 0) return
 
     onAdd({
-      id: `historical-shift-${Date.now()}`,
+      id: editShift ? editShift.id : `historical-shift-${Date.now()}`,
       date,
       participants: selectedParticipants,
     })
@@ -67,7 +74,7 @@ export function AddHistoricalShiftDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t.dialog.addHistorical.title}</DialogTitle>
+          <DialogTitle>{editShift ? t.dialog.addHistorical.editTitle : t.dialog.addHistorical.title}</DialogTitle>
           <DialogDescription>
             {t.dialog.addHistorical.desc}
           </DialogDescription>
@@ -81,6 +88,7 @@ export function AddHistoricalShiftDialog({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               max={formatLocalDate(new Date())}
+              disabled={!!editShift}
             />
           </div>
           
@@ -148,7 +156,7 @@ export function AddHistoricalShiftDialog({
             onClick={handleSubmit}
             disabled={!date || selectedParticipants.length === 0}
           >
-            {t.dialog.addHistorical.btnAdd}
+            {editShift ? t.dialog.addHistorical.btnSave : t.dialog.addHistorical.btnAdd}
           </Button>
         </DialogFooter>
       </DialogContent>

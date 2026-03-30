@@ -22,6 +22,7 @@ interface AddShiftDialogProps {
   onOpenChange: (open: boolean) => void
   onAdd: (shift: Shift) => 'ok' | 'conflict'
   participants: Participant[]
+  editShift?: Shift
 }
 
 export function AddShiftDialog({
@@ -29,6 +30,7 @@ export function AddShiftDialog({
   onOpenChange,
   onAdd,
   participants,
+  editShift,
 }: AddShiftDialogProps) {
   const { t } = useTranslation()
   const [date, setDate] = useState(formatLocalDate(new Date()))
@@ -36,10 +38,15 @@ export function AddShiftDialog({
 
   useEffect(() => {
     if (open) {
-      setDate(formatLocalDate(new Date()))
-      setSelectedParticipants([])
+      if (editShift) {
+        setDate(editShift.date)
+        setSelectedParticipants(editShift.participants)
+      } else {
+        setDate(formatLocalDate(new Date()))
+        setSelectedParticipants([])
+      }
     }
-  }, [open])
+  }, [open, editShift])
 
   const handleToggleParticipant = (participantId: string) => {
     setSelectedParticipants((current) =>
@@ -53,7 +60,7 @@ export function AddShiftDialog({
     if (!date || selectedParticipants.length === 0) return
 
     const result = onAdd({
-      id: `manual-shift-${Date.now()}`,
+      id: editShift ? editShift.id : `manual-shift-${Date.now()}`,
       date,
       participants: selectedParticipants,
     })
@@ -69,7 +76,7 @@ export function AddShiftDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t.dialog.addShift.title}</DialogTitle>
+          <DialogTitle>{editShift ? t.dialog.addShift.editTitle : t.dialog.addShift.title}</DialogTitle>
           <DialogDescription>{t.dialog.addShift.desc}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
@@ -80,6 +87,7 @@ export function AddShiftDialog({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              disabled={!!editShift}
             />
           </div>
 
@@ -148,7 +156,7 @@ export function AddShiftDialog({
             {t.dialog.addShift.btnCancel}
           </Button>
           <Button onClick={handleSubmit} disabled={!date || selectedParticipants.length === 0}>
-            {t.dialog.addShift.btnAdd}
+            {editShift ? t.dialog.addShift.btnSave : t.dialog.addShift.btnAdd}
           </Button>
         </DialogFooter>
       </DialogContent>

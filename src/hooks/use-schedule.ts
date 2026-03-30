@@ -49,6 +49,15 @@ export function useSchedule() {
     [setSchedule]
   )
 
+  const updateShift = useCallback(
+    (id: string, participants: string[]) => {
+      setSchedule((current) =>
+        (current || []).map((s) => (s.id === id ? { ...s, participants } : s))
+      )
+    },
+    [setSchedule]
+  )
+
   const reset = useCallback(() => {
     setSchedule([])
   }, [setSchedule])
@@ -60,5 +69,5 @@ export function useSchedule() {
     [setSchedule]
   )
 
-  return { schedule: currentSchedule, isGenerating, generate, removeShift, reset, replace }
+  return { schedule: currentSchedule, isGenerating, generate, removeShift, updateShift, reset, replace }
 }

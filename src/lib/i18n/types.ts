@@ -21,6 +21,7 @@ export interface Translations {
       manualAdded: string
       manualConflict: string
       shiftDeleted: string
+      shiftUpdated: string
       exported: string
       exportError: string
       imported: string
@@ -89,20 +90,24 @@ export interface Translations {
     }
     addHistorical: {
       title: string
+      editTitle: string
       desc: string
       shiftDate: string
       participantsLabel: (count: number) => string
       noParticipants: string
       btnAdd: string
+      btnSave: string
       btnCancel: string
     }
     addShift: {
       title: string
+      editTitle: string
       desc: string
       shiftDate: string
       participantsLabel: (count: number) => string
       noParticipants: string
       btnAdd: string
+      btnSave: string
       btnCancel: string
     }
   }

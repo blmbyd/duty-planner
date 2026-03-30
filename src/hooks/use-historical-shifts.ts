@@ -29,6 +29,15 @@ export function useHistoricalShifts() {
     [setHistoricalShifts]
   )
 
+  const update = useCallback(
+    (id: string, participants: string[]) => {
+      setHistoricalShifts((existing) =>
+        (existing || []).map((s) => (s.id === id ? { ...s, participants } : s))
+      )
+    },
+    [setHistoricalShifts]
+  )
+
   const replace = useCallback(
     (incoming: Shift[]) => {
       setHistoricalShifts(
@@ -38,5 +47,5 @@ export function useHistoricalShifts() {
     [setHistoricalShifts]
   )
 
-  return { historicalShifts: current, dialogOpen, setDialogOpen, add, remove, replace }
+  return { historicalShifts: current, dialogOpen, setDialogOpen, add, remove, update, replace }
 }

@@ -106,6 +106,17 @@ function App() {
     toast.success(t.app.toast.shiftDeleted)
   }
 
+  const handleUpdateShift = (id: string, participants: string[], isHistorical: boolean, isManual: boolean) => {
+    if (isHistorical) {
+      historyState.update(id, participants)
+    } else if (isManual) {
+      manualState.update(id, participants)
+    } else {
+      scheduleState.updateShift(id, participants)
+    }
+    toast.success(t.app.toast.shiftUpdated)
+  }
+
   const handleExport = () => {
     try {
       exportBackup({
@@ -211,6 +222,7 @@ function App() {
                 manualDialogOpen={manualState.dialogOpen}
                 onGenerate={handleGenerate}
                 onDeleteShift={handleDeleteShift}
+                onUpdateShift={handleUpdateShift}
                 onAddHistorical={handleAddHistorical}
                 onAddManual={handleAddManual}
                 onHistoricalDialogChange={historyState.setDialogOpen}

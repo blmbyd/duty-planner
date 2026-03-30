@@ -39,6 +39,7 @@ interface SchedulePanelProps {
   manualDialogOpen: boolean
   onGenerate: (fillMode: FillMode) => void
   onDeleteShift: (id: string, isHistorical: boolean, isManual: boolean) => void
+  onUpdateShift: (id: string, participants: string[], isHistorical: boolean, isManual: boolean) => void
   onAddHistorical: (shift: Shift) => void
   onAddManual: (shift: Shift) => 'ok' | 'conflict'
   onHistoricalDialogChange: (open: boolean) => void
@@ -56,6 +57,7 @@ export function SchedulePanel({
   manualDialogOpen,
   onGenerate,
   onDeleteShift,
+  onUpdateShift,
   onAddHistorical,
   onAddManual,
   onHistoricalDialogChange,
@@ -63,6 +65,31 @@ export function SchedulePanel({
 }: SchedulePanelProps) {
   const { t, locale } = useTranslation()
   const [fillMode, setFillMode] = useState<FillMode>('ignore-existing-positions')
+  const [editingShift, setEditingShift] = useState<Shift | undefined>()
+  const [editShiftDialogOpen, setEditShiftDialogOpen] = useState(false)
+  const [editHistoricalDialogOpen, setEditHistoricalDialogOpen] = useState(false)
+
+  const handleOpenEdit = (shift: Shift) => {
+    const status = getRowStatus(shift)
+    setEditingShift(shift)
+    if (status === 'historical') {
+      setEditHistoricalDialogOpen(true)
+    } else {
+      setEditShiftDialogOpen(true)
+    }
+  }
+
+  const handleEditSave = (updatedShift: Shift) => {
+    if (!editingShift) return
+    const status = getRowStatus(editingShift)
+    onUpdateShift(
+      editingShift.id,
+      updatedShift.participants,
+      status === 'historical',
+      status === 'manual'
+    )
+    setEditingShift(undefined)
+  }
 
   const allShifts = [...historicalShifts, ...manualShifts, ...schedule].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -234,19 +261,28 @@ export function SchedulePanel({
                           )}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() =>
-                              onDeleteShift(
-                                shift.id,
-                                rowStatus === 'historical',
-                                rowStatus === 'manual'
-                              )
-                            }
-                          >
-                            <Trash size={16} />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleOpenEdit(shift)}
+                            >
+                              <PencilSimple size={16} />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() =>
+                                onDeleteShift(
+                                  shift.id,
+                                  rowStatus === 'historical',
+                                  rowStatus === 'manual'
+                                )
+                              }
+                            >
+                              <Trash size={16} />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
@@ -265,11 +301,36 @@ export function SchedulePanel({
         participants={participants}
       />
 
+      <AddHistoricalShiftDialog
+        open={editHistoricalDialogOpen}
+        onOpenChange={(open) => {
+          setEditHistoricalDialogOpen(open)
+          if (!open) setEditingShift(undefined)
+        }}
+        onAdd={handleEditSave}
+        participants={participants}
+        editShift={editingShift}
+      />
+
       <AddShiftDialog
         open={manualDialogOpen}
         onOpenChange={onManualDialogChange}
         onAdd={onAddManual}
         participants={participants}
+      />
+
+      <AddShiftDialog
+        open={editShiftDialogOpen}
+        onOpenChange={(open) => {
+          setEditShiftDialogOpen(open)
+          if (!open) setEditingShift(undefined)
+        }}
+        onAdd={(shift) => {
+          handleEditSave(shift)
+          return 'ok'
+        }}
+        participants={participants}
+        editShift={editingShift}
       />
     </>
   )

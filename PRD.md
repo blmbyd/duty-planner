@@ -103,6 +103,7 @@ Kryteria akceptacji:
 
 Użytkownik musi móc dodawać i usuwać historyczne dyżury z przeszłości.
 Użytkownik musi móc dodawać i usuwać ręczne dyżury na dowolną datę — z przeszłości lub przyszłości.
+Użytkownik musi móc edytować skład uczestników dowolnego dyżuru: historycznego, ręcznego lub wygenerowanego.
 
 Kryteria akceptacji:
 
@@ -112,6 +113,9 @@ Kryteria akceptacji:
 - Dodanie ręcznego dyżuru na datę już zajętą w harmonogramie lub wśród istniejących ręcznych wpisów jest blokowane z czytelnym komunikatem błędu.
 - Historyczne dyżury i ręczne dyżury są wizualnie odróżnione od siebie i od nadchodzących dyżurów planowanych.
 - Oba typy danych są uwzględniane w eksporcie i imporcie.
+- Edycja zmienia wyłącznie listę uczestników — data dyżuru i jego typ pozostają niezmienione.
+- Po zapisaniu zmian użytkownik widzi komunikat potwierdzający aktualizację.
+- Edytowany dyżur wygenerowany z kompletną obsadą nie jest nadpisywany podczas kolejnego generowania harmonogramu.
 
 ### 5. Generowanie harmonogramu
 
@@ -151,6 +155,7 @@ Kryteria akceptacji:
 - Każdy dyżur pokazuje datę, uczestników i status.
 - Dni specjalne są oznaczane w harmonogramie.
 - Użytkownik może usuwać pojedyncze dyżury z listy.
+- Użytkownik może edytować skład uczestników dowolnego dyżuru za pomocą przycisku ołówka widocznego w wierszu tabeli.
 
 ### 7. Statystyki
 
@@ -192,7 +197,7 @@ Kryteria akceptacji:
 4. Użytkownik opcjonalnie dodaje dni specjalne.
 5. Użytkownik opcjonalnie dodaje historyczne dyżury.
 6. Użytkownik generuje harmonogram.
-7. Użytkownik przegląda wynikowe przydziały i statystyki.
+7. Użytkownik przegląda wynikowe przydziały i statystyki, w razie potrzeby edytuje skład uczestników wybranych dyżurów.
 8. Użytkownik eksportuje dane, jeśli chce zachować przenośną kopię zapasową.
 
 ## Przypadki brzegowe

@@ -31,6 +31,15 @@ export function useManualShifts() {
     [setManualShifts]
   )
 
+  const update = useCallback(
+    (id: string, participants: string[]) => {
+      setManualShifts((existing) =>
+        (existing || []).map((s) => (s.id === id ? { ...s, participants } : s))
+      )
+    },
+    [setManualShifts]
+  )
+
   const replace = useCallback(
     (incoming: Shift[]) => {
       setManualShifts(Array.isArray(incoming) ? incoming : [])
@@ -38,5 +47,5 @@ export function useManualShifts() {
     [setManualShifts]
   )
 
-  return { manualShifts: current, dialogOpen, setDialogOpen, add, remove, replace }
+  return { manualShifts: current, dialogOpen, setDialogOpen, add, remove, update, replace }
 }
