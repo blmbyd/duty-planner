@@ -12,7 +12,7 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 - Obsługuje comiesięczne dni specjalne, takie jak drugi poniedziałek albo ostatni piątek miesiąca, z własną liczbą osób na dyżurze.
 - Uwzględnia historyczne dyżury, aby wcześniejsze przydziały wpływały na przyszłe wyrównanie obciążenia.
 - Pozwala ręcznie dodać dyżur na dowolną datę — z przeszłości lub przyszłości — który blokuje termin i wpływa na sprawiedliwość planowania.
-- Umożliwia edycję składu uczestników dowolnego dyżuru: ręcznego, historycznego lub wygenerowanego — bez zmiany daty dyżuru.
+- Umożliwia edycję składu uczestników i powiązanego dnia specjalnego dowolnego dyżuru: ręcznego, historycznego lub wygenerowanego — bez zmiany daty dyżuru. Jeśli w ustawieniach zdefiniowano co najmniej jeden dzień specjalny, formularz edycji wyświetla listę wyboru umożliwiającą przypisanie lub odłączenie dnia specjalnego od dyżuru.
 - Blokuje dodanie ręcznego dyżuru, jeśli dana data jest już zajęta w harmonogramie lub wśród wcześniej dodanych wpisów ręcznych.
 - Zachowuje istniejące wpisy harmonogramu i przy ponownym generowaniu uzupełnia tylko brakujące daty.
 - Oferuje dwa tryby uzupełniania harmonogramu: domyślny tryb ignoruje istniejące pozycje i dodaje tylko nowe daty, a tryb uzupełniania brakujących osób wykrywa niekompletne dyżury i dopisuje do nich brakującą obsadę (osoby z kluczami i dodatkowych uczestników).
@@ -26,7 +26,7 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 3. Opcjonalnie zdefiniuj powtarzalne dni specjalne z inną liczbą osób.
 4. Opcjonalnie dodaj historyczne dyżury, aby zachować ciągłość sprawiedliwego rozkładu.
 5. Opcjonalnie dodaj ręczne dyżury na konkretne daty (w przeszłości lub przyszłości), które mają być trwale wpisane w harmonogram i chronione przed nadpisaniem przez generator.
-6. Opcjonalnie edytuj skład uczestników dowolnego istniejącego dyżuru za pomocą przycisku ołówka przy wierszu w tabeli harmonogramu.
+6. Opcjonalnie edytuj skład uczestników i powiązany dzień specjalny dowolnego istniejącego dyżuru za pomocą przycisku ołówka przy wierszu w tabeli harmonogramu.
 7. Wygeneruj lub uzupełnij harmonogram.
 8. W razie potrzeby wyeksportuj stan do pliku kopii zapasowej.
 

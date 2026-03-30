@@ -30,9 +30,13 @@ export function useHistoricalShifts() {
   )
 
   const update = useCallback(
-    (id: string, participants: string[]) => {
+    (id: string, participants: string[], specialDayId?: string | null) => {
       setHistoricalShifts((existing) =>
-        (existing || []).map((s) => (s.id === id ? { ...s, participants } : s))
+        (existing || []).map((s) =>
+          s.id === id
+            ? { ...s, participants, specialDayId: specialDayId === null ? undefined : specialDayId ?? s.specialDayId }
+            : s
+        )
       )
     },
     [setHistoricalShifts]

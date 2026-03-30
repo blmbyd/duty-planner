@@ -106,13 +106,13 @@ function App() {
     toast.success(t.app.toast.shiftDeleted)
   }
 
-  const handleUpdateShift = (id: string, participants: string[], isHistorical: boolean, isManual: boolean) => {
+  const handleUpdateShift = (id: string, participants: string[], isHistorical: boolean, isManual: boolean, specialDayId?: string | null) => {
     if (isHistorical) {
-      historyState.update(id, participants)
+      historyState.update(id, participants, specialDayId)
     } else if (isManual) {
-      manualState.update(id, participants)
+      manualState.update(id, participants, specialDayId)
     } else {
-      scheduleState.updateShift(id, participants)
+      scheduleState.updateShift(id, participants, specialDayId)
     }
     toast.success(t.app.toast.shiftUpdated)
   }

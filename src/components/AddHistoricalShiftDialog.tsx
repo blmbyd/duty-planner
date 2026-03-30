@@ -10,7 +10,14 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Participant, Shift } from '@/lib/types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Participant, Shift, SpecialDay } from '@/lib/types'
 import { formatLocalDate } from '@/lib/schedule/date-utils'
 import { Badge } from '@/components/ui/badge'
 import { Key, X } from '@phosphor-icons/react'
@@ -22,6 +29,7 @@ interface AddHistoricalShiftDialogProps {
   onOpenChange: (open: boolean) => void
   onAdd: (shift: Shift) => void
   participants: Participant[]
+  specialDays?: SpecialDay[]
   editShift?: Shift
 }
 
@@ -30,20 +38,24 @@ export function AddHistoricalShiftDialog({
   onOpenChange, 
   onAdd,
   participants,
+  specialDays = [],
   editShift,
 }: AddHistoricalShiftDialogProps) {
   const { t } = useTranslation()
   const [date, setDate] = useState(formatLocalDate(new Date()))
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([])
+  const [selectedSpecialDayId, setSelectedSpecialDayId] = useState<string>('')
 
   useEffect(() => {
     if (open) {
       if (editShift) {
         setDate(editShift.date)
         setSelectedParticipants(editShift.participants)
+        setSelectedSpecialDayId(editShift.specialDayId ?? '')
       } else {
         setDate(formatLocalDate(new Date()))
         setSelectedParticipants([])
+        setSelectedSpecialDayId('')
       }
     }
   }, [open, editShift])
@@ -63,10 +75,12 @@ export function AddHistoricalShiftDialog({
       id: editShift ? editShift.id : `historical-shift-${Date.now()}`,
       date,
       participants: selectedParticipants,
+      ...(selectedSpecialDayId ? { specialDayId: selectedSpecialDayId } : { specialDayId: undefined }),
     })
 
     setDate(formatLocalDate(new Date()))
     setSelectedParticipants([])
+    setSelectedSpecialDayId('')
     onOpenChange(false)
   }
 
@@ -91,6 +105,26 @@ export function AddHistoricalShiftDialog({
               disabled={!!editShift}
             />
           </div>
+
+          {specialDays.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="historicalShiftSpecialDay">{t.dialog.addHistorical.specialDayLabel}</Label>
+              <Select
+                value={selectedSpecialDayId}
+                onValueChange={(value) => setSelectedSpecialDayId(value === '__none__' ? '' : value)}
+              >
+                <SelectTrigger id="historicalShiftSpecialDay">
+                  <SelectValue placeholder={t.dialog.addHistorical.specialDayNone} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t.dialog.addHistorical.specialDayNone}</SelectItem>
+                  {specialDays.map((sd) => (
+                    <SelectItem key={sd.id} value={sd.id}>{sd.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           <div className="flex flex-col gap-2">
             <Label>{t.dialog.addHistorical.participantsLabel(selectedParticipants.length)}</Label>

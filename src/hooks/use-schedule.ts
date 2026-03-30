@@ -50,9 +50,13 @@ export function useSchedule() {
   )
 
   const updateShift = useCallback(
-    (id: string, participants: string[]) => {
+    (id: string, participants: string[], specialDayId?: string | null) => {
       setSchedule((current) =>
-        (current || []).map((s) => (s.id === id ? { ...s, participants } : s))
+        (current || []).map((s) =>
+          s.id === id
+            ? { ...s, participants, specialDayId: specialDayId === null ? undefined : specialDayId ?? s.specialDayId }
+            : s
+        )
       )
     },
     [setSchedule]

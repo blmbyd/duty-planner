@@ -103,7 +103,7 @@ Kryteria akceptacji:
 
 Użytkownik musi móc dodawać i usuwać historyczne dyżury z przeszłości.
 Użytkownik musi móc dodawać i usuwać ręczne dyżury na dowolną datę — z przeszłości lub przyszłości.
-Użytkownik musi móc edytować skład uczestników dowolnego dyżuru: historycznego, ręcznego lub wygenerowanego.
+Użytkownik musi móc edytować skład uczestników i powiązany dzień specjalny dowolnego dyżuru: historycznego, ręcznego lub wygenerowanego.
 
 Kryteria akceptacji:
 
@@ -113,7 +113,8 @@ Kryteria akceptacji:
 - Dodanie ręcznego dyżuru na datę już zajętą w harmonogramie lub wśród istniejących ręcznych wpisów jest blokowane z czytelnym komunikatem błędu.
 - Historyczne dyżury i ręczne dyżury są wizualnie odróżnione od siebie i od nadchodzących dyżurów planowanych.
 - Oba typy danych są uwzględniane w eksporcie i imporcie.
-- Edycja zmienia wyłącznie listę uczestników — data dyżuru i jego typ pozostają niezmienione.
+- Edycja zmienia listę uczestników oraz powiązanie z istniejącym dniem specjalnym — data dyżuru i jego typ pozostają niezmienione.
+- Jeśli w ustawieniach zdefiniowano co najmniej jeden dzień specjalny, formularz edycji wyświetla listę wyboru umożliwiającą powiązanie dyżuru z wybraną definicją dnia specjalnego lub usunięcie istniejącego powiązania.
 - Po zapisaniu zmian użytkownik widzi komunikat potwierdzający aktualizację.
 - Edytowany dyżur wygenerowany z kompletną obsadą nie jest nadpisywany podczas kolejnego generowania harmonogramu.
 
@@ -155,7 +156,7 @@ Kryteria akceptacji:
 - Każdy dyżur pokazuje datę, uczestników i status.
 - Dni specjalne są oznaczane w harmonogramie.
 - Użytkownik może usuwać pojedyncze dyżury z listy.
-- Użytkownik może edytować skład uczestników dowolnego dyżuru za pomocą przycisku ołówka widocznego w wierszu tabeli.
+- Użytkownik może edytować skład uczestników i powiązany dzień specjalny dowolnego dyżuru za pomocą przycisku ołówka widocznego w wierszu tabeli. Jeśli zdefiniowano co najmniej jeden dzień specjalny, formularz edycji zawiera pole wyboru umożliwiające przypisanie lub odłączenie dnia specjalnego.
 
 ### 7. Statystyki
 

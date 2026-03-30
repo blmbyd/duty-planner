@@ -10,7 +10,14 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Participant, Shift } from '@/lib/types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Participant, Shift, SpecialDay } from '@/lib/types'
 import { formatLocalDate } from '@/lib/schedule/date-utils'
 import { Badge } from '@/components/ui/badge'
 import { Key, X } from '@phosphor-icons/react'
@@ -22,6 +29,7 @@ interface AddShiftDialogProps {
   onOpenChange: (open: boolean) => void
   onAdd: (shift: Shift) => 'ok' | 'conflict'
   participants: Participant[]
+  specialDays?: SpecialDay[]
   editShift?: Shift
 }
 
@@ -30,20 +38,24 @@ export function AddShiftDialog({
   onOpenChange,
   onAdd,
   participants,
+  specialDays = [],
   editShift,
 }: AddShiftDialogProps) {
   const { t } = useTranslation()
   const [date, setDate] = useState(formatLocalDate(new Date()))
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([])
+  const [selectedSpecialDayId, setSelectedSpecialDayId] = useState<string>('')
 
   useEffect(() => {
     if (open) {
       if (editShift) {
         setDate(editShift.date)
         setSelectedParticipants(editShift.participants)
+        setSelectedSpecialDayId(editShift.specialDayId ?? '')
       } else {
         setDate(formatLocalDate(new Date()))
         setSelectedParticipants([])
+        setSelectedSpecialDayId('')
       }
     }
   }, [open, editShift])
@@ -63,11 +75,13 @@ export function AddShiftDialog({
       id: editShift ? editShift.id : `manual-shift-${Date.now()}`,
       date,
       participants: selectedParticipants,
+      ...(selectedSpecialDayId ? { specialDayId: selectedSpecialDayId } : { specialDayId: undefined }),
     })
 
     if (result === 'ok') {
       setDate(formatLocalDate(new Date()))
       setSelectedParticipants([])
+      setSelectedSpecialDayId('')
       onOpenChange(false)
     }
   }
@@ -90,6 +104,26 @@ export function AddShiftDialog({
               disabled={!!editShift}
             />
           </div>
+
+          {specialDays.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="shiftSpecialDay">{t.dialog.addShift.specialDayLabel}</Label>
+              <Select
+                value={selectedSpecialDayId}
+                onValueChange={(value) => setSelectedSpecialDayId(value === '__none__' ? '' : value)}
+              >
+                <SelectTrigger id="shiftSpecialDay">
+                  <SelectValue placeholder={t.dialog.addShift.specialDayNone} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t.dialog.addShift.specialDayNone}</SelectItem>
+                  {specialDays.map((sd) => (
+                    <SelectItem key={sd.id} value={sd.id}>{sd.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <Label>{t.dialog.addShift.participantsLabel(selectedParticipants.length)}</Label>

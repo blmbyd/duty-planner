@@ -39,7 +39,7 @@ interface SchedulePanelProps {
   manualDialogOpen: boolean
   onGenerate: (fillMode: FillMode) => void
   onDeleteShift: (id: string, isHistorical: boolean, isManual: boolean) => void
-  onUpdateShift: (id: string, participants: string[], isHistorical: boolean, isManual: boolean) => void
+  onUpdateShift: (id: string, participants: string[], isHistorical: boolean, isManual: boolean, specialDayId?: string | null) => void
   onAddHistorical: (shift: Shift) => void
   onAddManual: (shift: Shift) => 'ok' | 'conflict'
   onHistoricalDialogChange: (open: boolean) => void
@@ -86,7 +86,8 @@ export function SchedulePanel({
       editingShift.id,
       updatedShift.participants,
       status === 'historical',
-      status === 'manual'
+      status === 'manual',
+      updatedShift.specialDayId !== undefined ? updatedShift.specialDayId : null
     )
     setEditingShift(undefined)
   }
@@ -299,6 +300,7 @@ export function SchedulePanel({
         onOpenChange={onHistoricalDialogChange}
         onAdd={onAddHistorical}
         participants={participants}
+        specialDays={settings.specialDays}
       />
 
       <AddHistoricalShiftDialog
@@ -309,6 +311,7 @@ export function SchedulePanel({
         }}
         onAdd={handleEditSave}
         participants={participants}
+        specialDays={settings.specialDays}
         editShift={editingShift}
       />
 
@@ -317,6 +320,7 @@ export function SchedulePanel({
         onOpenChange={onManualDialogChange}
         onAdd={onAddManual}
         participants={participants}
+        specialDays={settings.specialDays}
       />
 
       <AddShiftDialog
@@ -330,6 +334,7 @@ export function SchedulePanel({
           return 'ok'
         }}
         participants={participants}
+        specialDays={settings.specialDays}
         editShift={editingShift}
       />
     </>

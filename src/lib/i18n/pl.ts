@@ -100,6 +100,8 @@ export const pl: Translations = {
       participantsLabel: (count) => `Uczestnicy dyzuru (${count} wybrano)`,
       noParticipants:
         'Brak uczestnikow w systemie. Dodaj uczestnikow aby moc przypisac ich do przeszlych dyzurow.',
+      specialDayLabel: 'Dzien specjalny',
+      specialDayNone: 'Zwykly dyzur',
       btnAdd: 'Dodaj dyzur',
       btnSave: 'Zapisz zmiany',
       btnCancel: 'Anuluj',
@@ -112,6 +114,8 @@ export const pl: Translations = {
       participantsLabel: (count) => `Uczestnicy dyzuru (${count} wybrano)`,
       noParticipants:
         'Brak uczestnikow w systemie. Dodaj uczestnikow aby moc przypisac ich do dyzuru.',
+      specialDayLabel: 'Dzien specjalny',
+      specialDayNone: 'Zwykly dyzur',
       btnAdd: 'Dodaj dyzur',
       btnSave: 'Zapisz zmiany',
       btnCancel: 'Anuluj',

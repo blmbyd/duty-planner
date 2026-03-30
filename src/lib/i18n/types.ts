@@ -95,6 +95,8 @@ export interface Translations {
       shiftDate: string
       participantsLabel: (count: number) => string
       noParticipants: string
+      specialDayLabel: string
+      specialDayNone: string
       btnAdd: string
       btnSave: string
       btnCancel: string
@@ -106,6 +108,8 @@ export interface Translations {
       shiftDate: string
       participantsLabel: (count: number) => string
       noParticipants: string
+      specialDayLabel: string
+      specialDayNone: string
       btnAdd: string
       btnSave: string
       btnCancel: string
