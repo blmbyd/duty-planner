@@ -203,7 +203,7 @@ export function SchedulePanel({
                           {String(index + 1).padStart(2, '0')}
                         </TableCell>
                         <TableCell className="font-mono">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-col items-start gap-1">
                             {formatDate(shift.date, locale)}
                             {shift.specialDayId && (
                               <Badge
@@ -219,7 +219,7 @@ export function SchedulePanel({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-col gap-1">
                             {shift.participants.map((participantId) => {
                               const participant = participants.find(
                                 (p) => p.id === participantId
