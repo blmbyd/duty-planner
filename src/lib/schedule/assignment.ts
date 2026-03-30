@@ -190,6 +190,7 @@ export function generateSchedule(
   const incompleteManualDates = new Set<string>()
   if (fillMode === 'fill-missing-people') {
     for (const shift of existingSchedule) {
+      if (shift.date < safeSettings.startDate || shift.date > safeSettings.endDate) continue
       const specialDayOcc = specialDaysMap.get(shift.date)
       const requiredCount = specialDayOcc
         ? specialDayOcc.peopleCount
@@ -202,6 +203,7 @@ export function generateSchedule(
       }
     }
     for (const shift of manualShifts) {
+      if (shift.date < safeSettings.startDate || shift.date > safeSettings.endDate) continue
       const specialDayOcc = specialDaysMap.get(shift.date)
       const requiredCount = specialDayOcc
         ? specialDayOcc.peopleCount
