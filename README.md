@@ -4,6 +4,8 @@ Duty Planner to aplikacja webowa typu local-first do sprawiedliwego planowania p
 
 Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CSS oraz komponentów UI opartych na Radix. Wszystkie dane robocze są przechowywane w przeglądarce i mogą zostać wyeksportowane lub przywrócone z kopii zapasowej w formacie JSON.
 
+<img width="1298" height="1228" alt="image" src="https://github.com/user-attachments/assets/deeeecc9-64da-40bc-b3c4-6d6083be6f14" />
+
 ## Co robi aplikacja
 
 - Zarządza uczestnikami wraz z imieniem, nazwiskiem i statusem posiadacza kluczy.
