@@ -191,7 +191,7 @@ export function SchedulePanel({
               </Button>
             </div>
           ) : (
-            <ScrollArea className="h-[600px]">
+            <ScrollArea className="h-[1000px]">
               <Table>
                 <TableHeader>
                   <TableRow>
