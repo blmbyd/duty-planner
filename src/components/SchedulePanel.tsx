@@ -215,15 +215,16 @@ export function SchedulePanel({
                             {formatDate(od.date, locale)}
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm text-muted-foreground">&mdash;</span>
-                          </TableCell>
-                          <TableCell>
                             <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
                               {t.schedule.status.offDay}
                             </Badge>
                           </TableCell>
+                          <TableCell></TableCell>
                           <TableCell>
                             <div className="flex gap-1">
+                              <Button size="icon" variant="ghost" disabled className="invisible">
+                                <PencilSimple size={16} />
+                              </Button>
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -293,16 +294,6 @@ export function SchedulePanel({
                           {rowStatus === 'historical' && (
                             <Badge variant="outline" className="text-muted-foreground">
                               {t.schedule.status.done}
-                            </Badge>
-                          )}
-                          {rowStatus === 'manual' && (
-                            <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50">
-                              {t.schedule.status.manual}
-                            </Badge>
-                          )}
-                          {rowStatus === 'planned' && (
-                            <Badge variant="default">
-                              {t.schedule.status.planned}
                             </Badge>
                           )}
                         </TableCell>
