@@ -137,6 +137,7 @@ Wymagania behawioralne:
 - Osoby przydzielone niedawno powinny być obniżane priorytetowo, jeśli istnieją alternatywy.
 - Dyżury historyczne i już zaplanowane powinny wpływać na wynik oceny harmonogramu.
 - Generator powinien próbować wielu wariantów harmonogramu i zachowywać najlepszy dostępny wynik.
+- Wynik oceny harmonogramu uwzględnia równomierność przydziałów do dni specjalnych — rozkład jest wyrównywany osobno dla każdego typu dnia specjalnego.
 
 Kryteria akceptacji:
 

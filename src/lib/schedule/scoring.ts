@@ -47,6 +47,35 @@ export function calculateDiversity(schedule: Shift[]): number {
   return -Math.sqrt(variance)
 }
 
+export function calculateSpecialDayFairness(schedule: Shift[], participants: Participant[]): number {
+  const specialDayCounts = new Map<string, Map<string, number>>()
+
+  schedule.forEach((shift) => {
+    if (!shift.specialDayId) return
+    if (!specialDayCounts.has(shift.specialDayId)) {
+      specialDayCounts.set(shift.specialDayId, new Map())
+    }
+    const counts = specialDayCounts.get(shift.specialDayId)!
+    shift.participants.forEach((participantId) => {
+      counts.set(participantId, (counts.get(participantId) || 0) + 1)
+    })
+  })
+
+  if (specialDayCounts.size === 0) return 0
+
+  let totalPenalty = 0
+
+  specialDayCounts.forEach((countsByParticipant) => {
+    const allCounts = participants.map((p) => countsByParticipant.get(p.id) || 0)
+    const avg = allCounts.reduce((a, b) => a + b, 0) / allCounts.length
+    const variance =
+      allCounts.reduce((sum, count) => sum + Math.pow(count - avg, 2), 0) / allCounts.length
+    totalPenalty += -Math.sqrt(variance)
+  })
+
+  return totalPenalty
+}
+
 export function scoreSchedule(schedule: Shift[], participants: Participant[]): number {
   let score = 0
 
@@ -58,6 +87,9 @@ export function scoreSchedule(schedule: Shift[], participants: Participant[]): n
 
   const diversityScore = calculateDiversity(schedule)
   score += diversityScore * 50
+
+  const specialDayFairnessScore = calculateSpecialDayFairness(schedule, participants)
+  score += specialDayFairnessScore * 200
 
   return score
 }

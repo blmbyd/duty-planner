@@ -41,6 +41,7 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 - Łączy dyżury historyczne, ręczne i już zaplanowane podczas obliczania sprawiedliwości przydziału.
 - Wyklucza daty zajęte przez ręczne dyżury z puli generowanych terminów — ręczne wpisy nie są nadpisywane.
 - Tworzy wiele kandydatów harmonogramu i zachowuje najlepiej oceniony wynik.
+- Przy ocenie każdego kandydata punktuje trzy kryteria: minimalne odstępy między dyżurami tej samej osoby, różnorodność par uczestników oraz równomierność przydziałów do dni specjalnych osobno dla każdego typu dnia specjalnego.
 - Preferuje osoby z mniejszą liczbą przydziałów i w miarę możliwości unika natychmiastowych powtórzeń tych samych osób.
 - Dodaje wystąpienia dni specjalnych do zbioru wymaganych dat nawet wtedy, gdy nie wynikają one z bazowej częstotliwości.
 
