@@ -33,20 +33,19 @@ interface SchedulePanelProps {
   participants: Participant[]
   schedule: Shift[]
   historicalShifts: Shift[]
-  manualShifts: Shift[]
   offDays: OffDay[]
   settings: ShiftSettings
   isGenerating: boolean
   historicalDialogOpen: boolean
-  manualDialogOpen: boolean
+  shiftDialogOpen: boolean
   onGenerate: (fillMode: FillMode) => void
-  onDeleteShift: (id: string, isHistorical: boolean, isManual: boolean) => void
+  onDeleteShift: (id: string, isHistorical: boolean) => void
   onDeleteOffDay: (id: string) => void
-  onUpdateShift: (id: string, participants: string[], isHistorical: boolean, isManual: boolean, specialDayId?: string | null) => void
+  onUpdateShift: (id: string, participants: string[], isHistorical: boolean, specialDayId?: string | null) => void
   onAddHistorical: (shift: Shift) => void
-  onAddManual: (shift: Shift) => 'ok' | 'conflict'
+  onAddShift: (shift: Shift) => 'ok' | 'conflict'
   onHistoricalDialogChange: (open: boolean) => void
-  onManualDialogChange: (open: boolean) => void
+  onShiftDialogChange: (open: boolean) => void
   onFillSingleDay: (id: string) => void
 }
 
@@ -54,20 +53,19 @@ export function SchedulePanel({
   participants,
   schedule,
   historicalShifts,
-  manualShifts,
   offDays,
   settings,
   isGenerating,
   historicalDialogOpen,
-  manualDialogOpen,
+  shiftDialogOpen,
   onGenerate,
   onDeleteShift,
   onDeleteOffDay,
   onUpdateShift,
   onAddHistorical,
-  onAddManual,
+  onAddShift,
   onHistoricalDialogChange,
-  onManualDialogChange,
+  onShiftDialogChange,
   onFillSingleDay,
 }: SchedulePanelProps) {
   const { t, locale } = useTranslation()
@@ -93,7 +91,6 @@ export function SchedulePanel({
       editingShift.id,
       updatedShift.participants,
       status === 'historical',
-      status === 'manual',
       updatedShift.specialDayId !== undefined ? updatedShift.specialDayId : null
     )
     setEditingShift(undefined)
@@ -105,7 +102,6 @@ export function SchedulePanel({
 
   const allItems: DisplayItem[] = [
     ...historicalShifts.map((s) => ({ kind: 'shift' as const, data: s })),
-    ...manualShifts.map((s) => ({ kind: 'shift' as const, data: s })),
     ...schedule.map((s) => ({ kind: 'shift' as const, data: s })),
     ...offDays.map((d) => ({ kind: 'offDay' as const, data: d })),
   ].sort((a, b) => new Date(a.data.date).getTime() - new Date(b.data.date).getTime())
@@ -115,10 +111,9 @@ export function SchedulePanel({
     return p ? `${p.firstName} ${p.lastName}` : t.schedule.unknown
   }
 
-  const getRowStatus = (shift: Shift): 'historical' | 'manual' | 'planned' => {
-    if (shift.isHistorical || (isPastDate(shift.date) && !manualShifts.some((m) => m.id === shift.id)))
+  const getRowStatus = (shift: Shift): 'historical' | 'planned' => {
+    if (shift.isHistorical || isPastDate(shift.date))
       return 'historical'
-    if (manualShifts.some((m) => m.id === shift.id)) return 'manual'
     return 'planned'
   }
 
@@ -134,7 +129,7 @@ export function SchedulePanel({
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => onManualDialogChange(true)}
+                onClick={() => onShiftDialogChange(true)}
                 disabled={participants.length === 0}
               >
                 <PencilSimple size={16} className="mr-2" />
@@ -169,9 +164,9 @@ export function SchedulePanel({
           {allItems.length > 0 && (
             <CardDescription>
               {historicalShifts.length > 0 && t.schedule.historical(historicalShifts.length)}
-              {historicalShifts.length > 0 && (manualShifts.length + schedule.length) > 0 && ' \u2022 '}
-              {(manualShifts.length + schedule.length) > 0 && t.schedule.planned(manualShifts.length + schedule.length)}
-              {(manualShifts.length + schedule.length) > 0 && ` \u2022 ${t.schedule.frequency[settings.frequency]}`}
+              {historicalShifts.length > 0 && schedule.length > 0 && ' \u2022 '}
+              {schedule.length > 0 && t.schedule.planned(schedule.length)}
+              {schedule.length > 0 && ` \u2022 ${t.schedule.frequency[settings.frequency]}`}
             </CardDescription>
           )}
         </CardHeader>
@@ -324,8 +319,7 @@ export function SchedulePanel({
                               onClick={() =>
                                 onDeleteShift(
                                   shift.id,
-                                  rowStatus === 'historical',
-                                  rowStatus === 'manual'
+                                  rowStatus === 'historical'
                                 )
                               }
                             >
@@ -364,9 +358,9 @@ export function SchedulePanel({
       />
 
       <AddShiftDialog
-        open={manualDialogOpen}
-        onOpenChange={onManualDialogChange}
-        onAdd={onAddManual}
+        open={shiftDialogOpen}
+        onOpenChange={onShiftDialogChange}
+        onAdd={onAddShift}
         participants={participants}
         specialDays={settings.specialDays}
       />

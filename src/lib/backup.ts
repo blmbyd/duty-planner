@@ -66,6 +66,17 @@ export function parseBackup(raw: string): AppData {
 
   const settings = obj.settings as Record<string, unknown>
 
+  // Backward compatibility: merge legacy manualShifts into schedule.
+  // Old backups guaranteed no date overlap between schedule and manualShifts,
+  // so a simple append is safe. We deduplicate by date just in case.
+  const baseSchedule = obj.schedule as AppData['schedule']
+  const legacyManual = Array.isArray(obj.manualShifts) ? obj.manualShifts as AppData['schedule'] : []
+  const scheduleDates = new Set(baseSchedule.map((s: AppData['schedule'][number]) => s.date))
+  const mergedSchedule = [
+    ...baseSchedule,
+    ...legacyManual.filter((s: AppData['schedule'][number]) => !scheduleDates.has(s.date)),
+  ]
+
   return {
     participants: obj.participants as AppData['participants'],
     settings: {
@@ -73,9 +84,8 @@ export function parseBackup(raw: string): AppData {
       ...(settings as Partial<AppData['settings']>),
       specialDays: Array.isArray(settings.specialDays) ? settings.specialDays as AppData['settings']['specialDays'] : [],
     },
-    schedule: obj.schedule as AppData['schedule'],
+    schedule: mergedSchedule,
     historicalShifts: obj.historicalShifts as AppData['historicalShifts'],
-    manualShifts: Array.isArray(obj.manualShifts) ? obj.manualShifts as AppData['manualShifts'] : [],
     offDays: Array.isArray(obj.offDays) ? obj.offDays as AppData['offDays'] : [],
     participantAbsences: Array.isArray(obj.participantAbsences) ? obj.participantAbsences as AppData['participantAbsences'] : [],
   }

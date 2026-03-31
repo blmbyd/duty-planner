@@ -107,11 +107,11 @@ Kryteria akceptacji:
 - Wystąpienia dni specjalnych mieszczące się w wybranym zakresie dat są uwzględniane w zbiorze wymaganych dat harmonogramu.
 - Dni specjalne mogą wymagać innej liczby osób niż zwykłe dyżury.
 
-### 4. Dyżury ręczne i historyczne
+### 4. Dyżury i wpisy historyczne
 
 Użytkownik musi móc dodawać i usuwać historyczne dyżury z przeszłości.
-Użytkownik musi móc dodawać i usuwać ręczne dyżury na dowolną datę — z przeszłości lub przyszłości.
-Użytkownik musi móc edytować skład uczestników i powiązany dzień specjalny dowolnego dyżuru: historycznego, ręcznego lub wygenerowanego.
+Użytkownik musi móc dodawać i usuwać planowane dyżury na dowolna datę — z przeszłości lub przyszłości — bez osobnej kategorii „ręcznych‟ wpisow; każdy taki wpis trafia do wspólnego harmonogramu i jest traktowany identycznie jak dyżur wygenerowany.
+Użytkownik musi móc edytować skład uczestników i powiązany dzień specjalny dowolnego dyżuru: historycznego lub planowanego.
 
 Kryteria akceptacji:
 
@@ -133,7 +133,7 @@ Generator musi:
 - sprawdzać, czy liczba uczestników jest wystarczająca,
 - sprawdzać, czy istnieje co najmniej jedna osoba z kluczami,
 - wyliczać wszystkie wymagane daty na podstawie bazowej częstotliwości i skonfigurowanych dni specjalnych,
-- zachowywać wcześniej wygenerowane wpisy harmonogramu,
+- zachowywać istniejące wpisy harmonogramu — niezależnie od tego, czy powstały ręcznie, czy automatycznie — i wykluczać zajęte przez nie daty z puli generowanych terminów,
 - dodawać wyłącznie brakujące dyżury,
 - pomijać daty oznaczone jako dni wolne — dzień wolny ma pierwszeństwo nad dostępnością wynikającą z bazowej częstotliwości i dni specjalnych,
 - twardо wykluczać uczestnika z puli kandydatów we wszystkich dniach objętych jego nieobecnością — zarówno w standardowym przepływie, jak i w trybie uzupełniania brakujących osób; blokada obejmuje też fallbackowe ścieżki wyboru,
@@ -170,7 +170,7 @@ Kryteria akceptacji:
 - Dni specjalne są oznaczane w harmonogramie.
 - Użytkownik może usuwać pojedyncze dyżury z listy.
 - Użytkownik może edytować skład uczestników i powiązany dzień specjalny dowolnego dyżuru za pomocą przycisku ołówka widocznego w wierszu tabeli. Jeśli zdefiniowano co najmniej jeden dzień specjalny, formularz edycji zawiera pole wyboru umożliwiające przypisanie lub odłączenie dnia specjalnego.
-- Użytkownik może uzupełnić obsadę wybranego planowanego dyżuru za pomocą przycisku "Uzupełnij dzień" widocznego w wierszu tabeli. Akcja dopisuje brakujące osoby (posiadacza kluczy lub dodatkowych uczestników), respektuje nieobecności i wymaganie osoby z kluczami, nie zmienia już przypisanych osób ani pozostałych dni. Kompletny dyżur pozostaje bez zmian — użytkownik otrzymuje komunikat informacyjny. Akcja nie jest dostępna dla dyżurów historycznych i ręcznych.
+- Użytkownik może uzupełnić obsądę wybranego planowanego dyżuru za pomocą przycisku "Uzupełnij dzień" widocznego w wierszu tabeli. Akcja dopisuje brakujące osoby (posiadacza kluczy lub dodatkowych uczestników), respektuje nieobecności i wymaganie osoby z kluczami, nie zmienia już przypisanych osób ani pozostałych dni. Kompletny dyżur pozostaje bez zmian — użytkownik otrzymuje komunikat informacyjny. Akcja nie jest dostępna dla dyżurów historycznych.
 
 ### 7. Statystyki
 
@@ -188,8 +188,9 @@ Użytkownik musi móc eksportować i importować pełny stan aplikacji jako JSON
 
 Kryteria akceptacji:
 
-- Eksport zawiera uczestników, ustawienia, harmonogram, historyczne dyżury, ręczne dyżury, dni wolne i nieobecności uczestników.
+- Eksport zawiera uczestników, ustawienia, harmonogram, historyczne dyżury, dni wolne i nieobecności uczestników.
 - Import obsługuje zarówno aktualny opakowany format kopii zapasowej, jak i zwykły obiekt danych dla zgodności.
+- Pliki eksportowane w starszych wersjach aplikacji (zawierające pole `manualShifts`) są nadal obsługiwane — wpisy z tego pola są automatycznie scalane do wspólnego harmonogramu.
 - Pliki eksportowane przed wprowadzeniem nieobecności uczestników są nadal poprawnie importowane — brakujące pole `participantAbsences` jest uzupełniane pustą tablicą.
 - Niepoprawny JSON albo nieprawidłowa struktura zwraca czytelny komunikat błędu.
 - Import całkowicie zastępuje bieżące dane lokalne.

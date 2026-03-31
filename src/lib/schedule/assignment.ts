@@ -7,7 +7,6 @@ export interface GenerateResult {
   schedule: Shift[]
   newDatesCount: number
   updatedShiftsCount: number
-  updatedManualShifts: Shift[]
 }
 
 function buildAbsenceLookup(absences: ParticipantAbsence[]): Map<string, Set<string>> {
@@ -244,7 +243,6 @@ export function generateSchedule(
   settings: ShiftSettings,
   historicalShifts: Shift[] = [],
   existingSchedule: Shift[] = [],
-  manualShifts: Shift[] = [],
   fillMode: FillMode = 'ignore-existing-positions',
   offDays: OffDay[] = [],
   participantAbsences: ParticipantAbsence[] = []
@@ -274,17 +272,15 @@ export function generateSchedule(
   const specialDaysMap = new Map(specialDayOccurrences.map((occ) => [occ.date, occ]))
 
   const existingDatesSet = new Set(existingSchedule.map((s) => s.date))
-  const manualDatesSet = new Set(manualShifts.map((s) => s.date))
   const offDaysSet = new Set(offDays.map((d) => d.date))
   const absenceLookup = buildAbsenceLookup(participantAbsences)
   const specialDayDates = specialDayOccurrences.map((occ) => occ.date)
   const allRequiredDates = [...new Set([...allDates, ...specialDayDates])].sort()
   const missingDates = allRequiredDates.filter(
-    (date) => !existingDatesSet.has(date) && !manualDatesSet.has(date) && !offDaysSet.has(date)
+    (date) => !existingDatesSet.has(date) && !offDaysSet.has(date)
   )
 
   const incompleteShiftDates = new Set<string>()
-  const incompleteManualDates = new Set<string>()
   if (fillMode === 'fill-missing-people') {
     for (const shift of existingSchedule) {
       if (shift.date < safeSettings.startDate || shift.date > safeSettings.endDate) continue
@@ -292,19 +288,13 @@ export function generateSchedule(
         incompleteShiftDates.add(shift.date)
       }
     }
-    for (const shift of manualShifts) {
-      if (shift.date < safeSettings.startDate || shift.date > safeSettings.endDate) continue
-      if (isShiftIncomplete(shift, specialPeople, specialDaysMap, safeSettings.peoplePerShift)) {
-        incompleteManualDates.add(shift.date)
-      }
-    }
   }
 
-  if (missingDates.length === 0 && incompleteShiftDates.size === 0 && incompleteManualDates.size === 0) {
-    return { schedule: existingSchedule, newDatesCount: 0, updatedShiftsCount: 0, updatedManualShifts: manualShifts }
+  if (missingDates.length === 0 && incompleteShiftDates.size === 0) {
+    return { schedule: existingSchedule, newDatesCount: 0, updatedShiftsCount: 0 }
   }
 
-  const allHistoricalShifts = [...historicalShifts, ...manualShifts, ...existingSchedule]
+  const allHistoricalShifts = [...historicalShifts, ...existingSchedule]
 
   let bestNewShifts: Shift[] = []
   let bestScore = -Infinity
@@ -392,17 +382,15 @@ export function generateSchedule(
   }
 
   const filledExistingShifts: Shift[] = []
-  const filledManualShifts: Shift[] = []
   let updatedShiftsCount = 0
 
   const needsFill =
-    fillMode === 'fill-missing-people' &&
-    (incompleteShiftDates.size > 0 || incompleteManualDates.size > 0)
+    fillMode === 'fill-missing-people' && incompleteShiftDates.size > 0
 
   if (needsFill) {
     const fillCounts = new Map<string, number>()
     participants.forEach((p) => fillCounts.set(p.id, 0))
-    ;[...historicalShifts, ...manualShifts, ...existingSchedule, ...bestNewShifts].forEach(
+    ;[...historicalShifts, ...existingSchedule, ...bestNewShifts].forEach(
       (shift) => {
         shift.participants.forEach((id) => {
           if (fillCounts.has(id)) {
@@ -429,27 +417,8 @@ export function generateSchedule(
       filledExistingShifts.push(updatedShift)
       updatedShiftsCount++
     }
-
-    for (const shift of manualShifts) {
-      if (!incompleteManualDates.has(shift.date)) {
-        filledManualShifts.push(shift)
-        continue
-      }
-      const { updatedShift } = fillParticipantsForShift(
-        shift,
-        specialPeople,
-        participants,
-        specialDaysMap,
-        safeSettings.peoplePerShift,
-        fillCounts,
-        absenceLookup
-      )
-      filledManualShifts.push(updatedShift)
-      updatedShiftsCount++
-    }
   } else {
     filledExistingShifts.push(...existingSchedule)
-    filledManualShifts.push(...manualShifts)
   }
 
   return {
@@ -458,7 +427,6 @@ export function generateSchedule(
     ),
     newDatesCount: bestNewShifts.length,
     updatedShiftsCount,
-    updatedManualShifts: filledManualShifts,
   }
 }
 
@@ -473,7 +441,6 @@ export function fillSinglePlannedShift(
   settings: ShiftSettings,
   historicalShifts: Shift[],
   existingSchedule: Shift[],
-  manualShifts: Shift[],
   absences: ParticipantAbsence[]
 ): FillSingleResult {
   const safeSettings: ShiftSettings = {
@@ -496,7 +463,7 @@ export function fillSinglePlannedShift(
 
   const fillCounts = new Map<string, number>()
   participants.forEach((p) => fillCounts.set(p.id, 0))
-  ;[...historicalShifts, ...manualShifts, ...existingSchedule].forEach((s) => {
+  ;[...historicalShifts, ...existingSchedule].forEach((s) => {
     s.participants.forEach((id) => {
       if (fillCounts.has(id)) {
         fillCounts.set(id, (fillCounts.get(id) || 0) + 1)

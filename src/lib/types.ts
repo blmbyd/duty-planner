@@ -49,7 +49,6 @@ export interface AppData {
   settings: ShiftSettings
   schedule: Shift[]
   historicalShifts: Shift[]
-  manualShifts: Shift[]
   offDays: OffDay[]
   participantAbsences: ParticipantAbsence[]
 }

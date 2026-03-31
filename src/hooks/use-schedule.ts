@@ -6,19 +6,29 @@ import { generateSchedule, fillSinglePlannedShift } from '@/lib/schedule-generat
 export function useSchedule() {
   const [schedule, setSchedule] = useLocalStorage<Shift[]>('schedule', [])
   const [isGenerating, setIsGenerating] = useState(false)
+  const [shiftDialogOpen, setShiftDialogOpen] = useState(false)
 
   const currentSchedule = schedule || []
+
+  const add = useCallback(
+    (shift: Shift): 'ok' | 'conflict' => {
+      const existingDates = new Set(currentSchedule.map((s) => s.date))
+      if (existingDates.has(shift.date)) return 'conflict'
+      setSchedule((current) => [...(current || []), shift])
+      return 'ok'
+    },
+    [currentSchedule, setSchedule]
+  )
 
   const generate = useCallback(
     async (
       participants: Participant[],
       settings: ShiftSettings,
       historicalShifts: Shift[],
-      manualShifts: Shift[],
       fillMode: FillMode = 'ignore-existing-positions',
       offDays: OffDay[] = [],
       participantAbsences: ParticipantAbsence[] = []
-    ): Promise<{ added: number; updated: number; total: number; updatedManualShifts: import('@/lib/types').Shift[] }> => {
+    ): Promise<{ added: number; updated: number; total: number }> => {
       setIsGenerating(true)
       try {
         await new Promise<void>((resolve) => setTimeout(resolve, 500))
@@ -27,7 +37,6 @@ export function useSchedule() {
           settings,
           historicalShifts,
           currentSchedule,
-          manualShifts,
           fillMode,
           offDays,
           participantAbsences
@@ -37,7 +46,6 @@ export function useSchedule() {
           added: result.newDatesCount,
           updated: result.updatedShiftsCount,
           total: result.schedule.length,
-          updatedManualShifts: result.updatedManualShifts,
         }
       } finally {
         setIsGenerating(false)
@@ -83,7 +91,6 @@ export function useSchedule() {
       participants: Participant[],
       settings: ShiftSettings,
       historicalShifts: Shift[],
-      manualShifts: Shift[],
       absences: ParticipantAbsence[]
     ): { changed: boolean } => {
       const shift = currentSchedule.find((s) => s.id === shiftId)
@@ -94,7 +101,6 @@ export function useSchedule() {
         settings,
         historicalShifts,
         currentSchedule,
-        manualShifts,
         absences
       )
       if (result.changed) {
@@ -107,5 +113,5 @@ export function useSchedule() {
     [currentSchedule, setSchedule]
   )
 
-  return { schedule: currentSchedule, isGenerating, generate, removeShift, updateShift, reset, replace, fillSingleDay }
+  return { schedule: currentSchedule, isGenerating, shiftDialogOpen, setShiftDialogOpen, generate, add, removeShift, updateShift, reset, replace, fillSingleDay }
 }
