@@ -15,6 +15,7 @@ import { SpecialDaysManager } from '@/components/SpecialDaysManager'
 import { OffDaysManager } from '@/components/OffDaysManager'
 import { Participant, Shift, FillMode, OffDay, ParticipantAbsence } from '@/lib/types'
 import { exportBackup, parseBackup } from '@/lib/backup'
+import { fillSinglePlannedShift } from '@/lib/schedule-generator'
 import { useTranslation } from '@/lib/i18n'
 
 function App() {
@@ -152,6 +153,52 @@ function App() {
     toast.success(t.app.toast.shiftUpdated)
   }
 
+  const handleFillSingleDay = (id: string) => {
+    const { participants } = participantsState
+    if (participants.length < settings.peoplePerShift) {
+      toast.error(t.app.toast.tooFewParticipants)
+      return
+    }
+    if (!participants.some((p) => p.hasKeys)) {
+      toast.error(t.app.toast.noKeyHolder)
+      return
+    }
+    const isManual = manualState.manualShifts.some((s) => s.id === id)
+    if (isManual) {
+      const shift = manualState.manualShifts.find((s) => s.id === id)
+      if (!shift) return
+      const result = fillSinglePlannedShift(
+        shift,
+        participants,
+        settings,
+        historyState.historicalShifts,
+        scheduleState.schedule,
+        manualState.manualShifts,
+        absencesState.absences
+      )
+      if (result.changed) {
+        manualState.update(id, result.updatedShift.participants, result.updatedShift.specialDayId ?? null)
+        toast.success(t.app.toast.singleDayFilled)
+      } else {
+        toast.info(t.app.toast.singleDayAlreadyComplete)
+      }
+    } else {
+      const result = scheduleState.fillSingleDay(
+        id,
+        participants,
+        settings,
+        historyState.historicalShifts,
+        manualState.manualShifts,
+        absencesState.absences
+      )
+      if (result.changed) {
+        toast.success(t.app.toast.singleDayFilled)
+      } else {
+        toast.info(t.app.toast.singleDayAlreadyComplete)
+      }
+    }
+  }
+
   const handleExport = () => {
     try {
       exportBackup({
@@ -281,6 +328,7 @@ function App() {
                 onAddManual={handleAddManual}
                 onHistoricalDialogChange={historyState.setDialogOpen}
                 onManualDialogChange={manualState.setDialogOpen}
+                onFillSingleDay={handleFillSingleDay}
               />
             </div>
           </div>

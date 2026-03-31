@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useLocalStorage } from './use-local-storage'
 import { Shift, Participant, ShiftSettings, FillMode, OffDay, ParticipantAbsence } from '@/lib/types'
-import { generateSchedule } from '@/lib/schedule-generator'
+import { generateSchedule, fillSinglePlannedShift } from '@/lib/schedule-generator'
 
 export function useSchedule() {
   const [schedule, setSchedule] = useLocalStorage<Shift[]>('schedule', [])
@@ -77,5 +77,35 @@ export function useSchedule() {
     [setSchedule]
   )
 
-  return { schedule: currentSchedule, isGenerating, generate, removeShift, updateShift, reset, replace }
+  const fillSingleDay = useCallback(
+    (
+      shiftId: string,
+      participants: Participant[],
+      settings: ShiftSettings,
+      historicalShifts: Shift[],
+      manualShifts: Shift[],
+      absences: ParticipantAbsence[]
+    ): { changed: boolean } => {
+      const shift = currentSchedule.find((s) => s.id === shiftId)
+      if (!shift) return { changed: false }
+      const result = fillSinglePlannedShift(
+        shift,
+        participants,
+        settings,
+        historicalShifts,
+        currentSchedule,
+        manualShifts,
+        absences
+      )
+      if (result.changed) {
+        setSchedule((current) =>
+          (current || []).map((s) => (s.id === shiftId ? result.updatedShift : s))
+        )
+      }
+      return { changed: result.changed }
+    },
+    [currentSchedule, setSchedule]
+  )
+
+  return { schedule: currentSchedule, isGenerating, generate, removeShift, updateShift, reset, replace, fillSingleDay }
 }

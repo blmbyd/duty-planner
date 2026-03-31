@@ -31,6 +31,8 @@ export interface Translations {
       offDayAdded: string
       offDayDeleted: string
       offDayConflict: string
+      singleDayFilled: string
+      singleDayAlreadyComplete: string
     }
   }
   schedule: {
@@ -62,6 +64,7 @@ export interface Translations {
       manual: string
       offDay: string
     }
+    fillSingleDayBtn: string
     unknown: string
     specialDay: string
     frequency: {

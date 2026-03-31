@@ -176,6 +176,69 @@ function buildShiftForRegularDay(
   return shiftParticipants
 }
 
+function isShiftIncomplete(
+  shift: Shift,
+  specialPeople: Participant[],
+  specialDaysMap: Map<string, SpecialDayOccurrence>,
+  peoplePerShift: number
+): boolean {
+  const specialDayOcc = specialDaysMap.get(shift.date)
+  const requiredCount = specialDayOcc ? specialDayOcc.peopleCount : peoplePerShift
+  const hasKeyHolder = specialDayOcc
+    ? true
+    : shift.participants.some((id) => specialPeople.some((p) => p.id === id))
+  return shift.participants.length < requiredCount || (!specialDayOcc && !hasKeyHolder)
+}
+
+function fillParticipantsForShift(
+  shift: Shift,
+  specialPeople: Participant[],
+  participants: Participant[],
+  specialDaysMap: Map<string, SpecialDayOccurrence>,
+  peoplePerShift: number,
+  fillCounts: Map<string, number>,
+  absenceLookup: Map<string, Set<string>>
+): { updatedShift: Shift; changed: boolean } {
+  const specialDayOcc = specialDaysMap.get(shift.date)
+  const requiredCount = specialDayOcc ? specialDayOcc.peopleCount : peoplePerShift
+  const currentParticipants = [...shift.participants]
+
+  if (!specialDayOcc) {
+    const hasKeyHolder = currentParticipants.some((id) =>
+      specialPeople.some((p) => p.id === id)
+    )
+    if (!hasKeyHolder) {
+      const available = shuffleArray(
+        specialPeople.filter(
+          (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
+        )
+      ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
+      if (available.length > 0) {
+        currentParticipants.push(available[0].id)
+        fillCounts.set(available[0].id, (fillCounts.get(available[0].id) || 0) + 1)
+      }
+    }
+  }
+
+  if (currentParticipants.length < requiredCount) {
+    const available = shuffleArray(
+      participants.filter(
+        (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
+      )
+    ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
+    for (const person of available) {
+      if (currentParticipants.length >= requiredCount) break
+      currentParticipants.push(person.id)
+      fillCounts.set(person.id, (fillCounts.get(person.id) || 0) + 1)
+    }
+  }
+
+  return {
+    updatedShift: { ...shift, participants: currentParticipants },
+    changed: currentParticipants.length !== shift.participants.length,
+  }
+}
+
 export function generateSchedule(
   participants: Participant[],
   settings: ShiftSettings,
@@ -225,27 +288,13 @@ export function generateSchedule(
   if (fillMode === 'fill-missing-people') {
     for (const shift of existingSchedule) {
       if (shift.date < safeSettings.startDate || shift.date > safeSettings.endDate) continue
-      const specialDayOcc = specialDaysMap.get(shift.date)
-      const requiredCount = specialDayOcc
-        ? specialDayOcc.peopleCount
-        : safeSettings.peoplePerShift
-      const hasKeyHolder = specialDayOcc
-        ? true
-        : shift.participants.some((id) => specialPeople.some((p) => p.id === id))
-      if (shift.participants.length < requiredCount || (!specialDayOcc && !hasKeyHolder)) {
+      if (isShiftIncomplete(shift, specialPeople, specialDaysMap, safeSettings.peoplePerShift)) {
         incompleteShiftDates.add(shift.date)
       }
     }
     for (const shift of manualShifts) {
       if (shift.date < safeSettings.startDate || shift.date > safeSettings.endDate) continue
-      const specialDayOcc = specialDaysMap.get(shift.date)
-      const requiredCount = specialDayOcc
-        ? specialDayOcc.peopleCount
-        : safeSettings.peoplePerShift
-      const hasKeyHolder = specialDayOcc
-        ? true
-        : shift.participants.some((id) => specialPeople.some((p) => p.id === id))
-      if (shift.participants.length < requiredCount || (!specialDayOcc && !hasKeyHolder)) {
+      if (isShiftIncomplete(shift, specialPeople, specialDaysMap, safeSettings.peoplePerShift)) {
         incompleteManualDates.add(shift.date)
       }
     }
@@ -368,40 +417,16 @@ export function generateSchedule(
         filledExistingShifts.push(shift)
         continue
       }
-      const specialDayOcc = specialDaysMap.get(shift.date)
-      const requiredCount = specialDayOcc
-        ? specialDayOcc.peopleCount
-        : safeSettings.peoplePerShift
-      const currentParticipants = [...shift.participants]
-      if (!specialDayOcc) {
-        const hasKeyHolder = currentParticipants.some((id) =>
-          specialPeople.some((p) => p.id === id)
-        )
-        if (!hasKeyHolder) {
-          const available = shuffleArray(
-            specialPeople.filter(
-              (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
-            )
-          ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
-          if (available.length > 0) {
-            currentParticipants.push(available[0].id)
-            fillCounts.set(available[0].id, (fillCounts.get(available[0].id) || 0) + 1)
-          }
-        }
-      }
-      if (currentParticipants.length < requiredCount) {
-        const available = shuffleArray(
-          participants.filter(
-            (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
-          )
-        ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
-        for (const person of available) {
-          if (currentParticipants.length >= requiredCount) break
-          currentParticipants.push(person.id)
-          fillCounts.set(person.id, (fillCounts.get(person.id) || 0) + 1)
-        }
-      }
-      filledExistingShifts.push({ ...shift, participants: currentParticipants })
+      const { updatedShift } = fillParticipantsForShift(
+        shift,
+        specialPeople,
+        participants,
+        specialDaysMap,
+        safeSettings.peoplePerShift,
+        fillCounts,
+        absenceLookup
+      )
+      filledExistingShifts.push(updatedShift)
       updatedShiftsCount++
     }
 
@@ -410,40 +435,16 @@ export function generateSchedule(
         filledManualShifts.push(shift)
         continue
       }
-      const specialDayOcc = specialDaysMap.get(shift.date)
-      const requiredCount = specialDayOcc
-        ? specialDayOcc.peopleCount
-        : safeSettings.peoplePerShift
-      const currentParticipants = [...shift.participants]
-      if (!specialDayOcc) {
-        const hasKeyHolder = currentParticipants.some((id) =>
-          specialPeople.some((p) => p.id === id)
-        )
-        if (!hasKeyHolder) {
-          const available = shuffleArray(
-            specialPeople.filter(
-              (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
-            )
-          ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
-          if (available.length > 0) {
-            currentParticipants.push(available[0].id)
-            fillCounts.set(available[0].id, (fillCounts.get(available[0].id) || 0) + 1)
-          }
-        }
-      }
-      if (currentParticipants.length < requiredCount) {
-        const available = shuffleArray(
-          participants.filter(
-            (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
-          )
-        ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
-        for (const person of available) {
-          if (currentParticipants.length >= requiredCount) break
-          currentParticipants.push(person.id)
-          fillCounts.set(person.id, (fillCounts.get(person.id) || 0) + 1)
-        }
-      }
-      filledManualShifts.push({ ...shift, participants: currentParticipants })
+      const { updatedShift } = fillParticipantsForShift(
+        shift,
+        specialPeople,
+        participants,
+        specialDaysMap,
+        safeSettings.peoplePerShift,
+        fillCounts,
+        absenceLookup
+      )
+      filledManualShifts.push(updatedShift)
       updatedShiftsCount++
     }
   } else {
@@ -459,4 +460,57 @@ export function generateSchedule(
     updatedShiftsCount,
     updatedManualShifts: filledManualShifts,
   }
+}
+
+export interface FillSingleResult {
+  updatedShift: Shift
+  changed: boolean
+}
+
+export function fillSinglePlannedShift(
+  shift: Shift,
+  participants: Participant[],
+  settings: ShiftSettings,
+  historicalShifts: Shift[],
+  existingSchedule: Shift[],
+  manualShifts: Shift[],
+  absences: ParticipantAbsence[]
+): FillSingleResult {
+  const safeSettings: ShiftSettings = {
+    ...settings,
+    specialDays: Array.isArray(settings.specialDays) ? settings.specialDays : [],
+  }
+
+  const specialPeople = participants.filter((p) => p.hasKeys)
+  const specialDayOccurrences = getSpecialDaysInRange(
+    safeSettings.startDate,
+    safeSettings.endDate,
+    safeSettings.specialDays
+  )
+  const specialDaysMap = new Map(specialDayOccurrences.map((occ) => [occ.date, occ]))
+  const absenceLookup = buildAbsenceLookup(absences)
+
+  if (!isShiftIncomplete(shift, specialPeople, specialDaysMap, safeSettings.peoplePerShift)) {
+    return { updatedShift: shift, changed: false }
+  }
+
+  const fillCounts = new Map<string, number>()
+  participants.forEach((p) => fillCounts.set(p.id, 0))
+  ;[...historicalShifts, ...manualShifts, ...existingSchedule].forEach((s) => {
+    s.participants.forEach((id) => {
+      if (fillCounts.has(id)) {
+        fillCounts.set(id, (fillCounts.get(id) || 0) + 1)
+      }
+    })
+  })
+
+  return fillParticipantsForShift(
+    shift,
+    specialPeople,
+    participants,
+    specialDaysMap,
+    safeSettings.peoplePerShift,
+    fillCounts,
+    absenceLookup
+  )
 }

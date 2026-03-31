@@ -34,6 +34,8 @@ export const pl: Translations = {
       offDayAdded: 'Dzien wolny dodany',
       offDayDeleted: 'Dzien wolny usuniety',
       offDayConflict: 'Na ten dzien istnieje juz dyzur, reczny wpis lub inny dzien wolny',
+      singleDayFilled: 'Dyzur uzupelniony',
+      singleDayAlreadyComplete: 'Dyzur jest juz kompletny',
     },
   },
   schedule: {
@@ -65,6 +67,7 @@ export const pl: Translations = {
       manual: 'Reczny',
       offDay: 'Dzien wolny',
     },
+    fillSingleDayBtn: 'Uzupelnij dzien',
     unknown: 'Nieznany',
     specialDay: 'Dzien specjalny',
     frequency: {

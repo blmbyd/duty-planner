@@ -170,6 +170,7 @@ Kryteria akceptacji:
 - Dni specjalne są oznaczane w harmonogramie.
 - Użytkownik może usuwać pojedyncze dyżury z listy.
 - Użytkownik może edytować skład uczestników i powiązany dzień specjalny dowolnego dyżuru za pomocą przycisku ołówka widocznego w wierszu tabeli. Jeśli zdefiniowano co najmniej jeden dzień specjalny, formularz edycji zawiera pole wyboru umożliwiające przypisanie lub odłączenie dnia specjalnego.
+- Użytkownik może uzupełnić obsadę wybranego planowanego dyżuru za pomocą przycisku "Uzupełnij dzień" widocznego w wierszu tabeli. Akcja dopisuje brakujące osoby (posiadacza kluczy lub dodatkowych uczestników), respektuje nieobecności i wymaganie osoby z kluczami, nie zmienia już przypisanych osób ani pozostałych dni. Kompletny dyżur pozostaje bez zmian — użytkownik otrzymuje komunikat informacyjny. Akcja nie jest dostępna dla dyżurów historycznych i ręcznych.
 
 ### 7. Statystyki
 

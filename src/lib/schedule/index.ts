@@ -1,5 +1,5 @@
-export { generateSchedule } from './assignment'
-export type { GenerateResult } from './assignment'
+export { generateSchedule, fillSinglePlannedShift } from './assignment'
+export type { GenerateResult, FillSingleResult } from './assignment'
 export { getDaysBetweenDates, isPastDate, formatDatePL } from './date-utils'
 export { getSpecialDaysInRange, getSpecialDayForMonth } from './special-days'
 export type { SpecialDayOccurrence } from './special-days'

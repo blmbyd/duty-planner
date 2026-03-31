@@ -21,6 +21,7 @@ import {
   Key,
   Star,
   PencilSimple,
+  UserPlus,
 } from '@phosphor-icons/react'
 import { Participant, Shift, ShiftSettings, FillMode, OffDay } from '@/lib/types'
 import { formatDate, isPastDate } from '@/lib/schedule/date-utils'
@@ -46,6 +47,7 @@ interface SchedulePanelProps {
   onAddManual: (shift: Shift) => 'ok' | 'conflict'
   onHistoricalDialogChange: (open: boolean) => void
   onManualDialogChange: (open: boolean) => void
+  onFillSingleDay: (id: string) => void
 }
 
 export function SchedulePanel({
@@ -66,6 +68,7 @@ export function SchedulePanel({
   onAddManual,
   onHistoricalDialogChange,
   onManualDialogChange,
+  onFillSingleDay,
 }: SchedulePanelProps) {
   const { t, locale } = useTranslation()
   const [fillMode, setFillMode] = useState<FillMode>('ignore-existing-positions')
@@ -166,11 +169,9 @@ export function SchedulePanel({
           {allItems.length > 0 && (
             <CardDescription>
               {historicalShifts.length > 0 && t.schedule.historical(historicalShifts.length)}
-              {historicalShifts.length > 0 && (manualShifts.length > 0 || schedule.length > 0) && ' \u2022 '}
-              {manualShifts.length > 0 && t.schedule.manual(manualShifts.length)}
-              {manualShifts.length > 0 && schedule.length > 0 && ' \u2022 '}
-              {schedule.length > 0 && t.schedule.planned(schedule.length)}
-              {schedule.length > 0 && ` \u2022 ${t.schedule.frequency[settings.frequency]}`}
+              {historicalShifts.length > 0 && (manualShifts.length + schedule.length) > 0 && ' \u2022 '}
+              {(manualShifts.length + schedule.length) > 0 && t.schedule.planned(manualShifts.length + schedule.length)}
+              {(manualShifts.length + schedule.length) > 0 && ` \u2022 ${t.schedule.frequency[settings.frequency]}`}
             </CardDescription>
           )}
         </CardHeader>
@@ -199,7 +200,7 @@ export function SchedulePanel({
                     <TableHead>{t.schedule.column.date}</TableHead>
                     <TableHead>{t.schedule.column.participants}</TableHead>
                     <TableHead className="w-[120px]">{t.schedule.column.status}</TableHead>
-                    <TableHead className="w-[80px]"></TableHead>
+                    <TableHead className="w-[100px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -299,6 +300,17 @@ export function SchedulePanel({
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            {rowStatus !== 'historical' && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                title={t.schedule.fillSingleDayBtn}
+                                aria-label={t.schedule.fillSingleDayBtn}
+                                onClick={() => onFillSingleDay(shift.id)}
+                              >
+                                <UserPlus size={16} />
+                              </Button>
+                            )}
                             <Button
                               size="icon"
                               variant="ghost"
