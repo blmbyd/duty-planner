@@ -187,7 +187,7 @@ export function SchedulePanel({
               </Button>
             </div>
           ) : (
-            <ScrollArea className="h-[1000px]">
+            <ScrollArea className="h-[1200px]">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -217,7 +217,10 @@ export function SchedulePanel({
                           </TableCell>
                           <TableCell></TableCell>
                           <TableCell>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 justify-end">
+                              <Button size="icon" variant="ghost" disabled className="invisible">
+                                <UserPlus size={16} />
+                              </Button>
                               <Button size="icon" variant="ghost" disabled className="invisible">
                                 <PencilSimple size={16} />
                               </Button>
@@ -294,8 +297,8 @@ export function SchedulePanel({
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-1">
-                            {rowStatus !== 'historical' && (
+                          <div className="flex gap-1 justify-end">
+                            {rowStatus !== 'historical' ? (
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -303,6 +306,10 @@ export function SchedulePanel({
                                 aria-label={t.schedule.fillSingleDayBtn}
                                 onClick={() => onFillSingleDay(shift.id)}
                               >
+                                <UserPlus size={16} />
+                              </Button>
+                            ) : (
+                              <Button size="icon" variant="ghost" disabled className="invisible">
                                 <UserPlus size={16} />
                               </Button>
                             )}
