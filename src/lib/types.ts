@@ -32,12 +32,18 @@ export interface Shift {
   specialDayId?: string
 }
 
+export interface OffDay {
+  id: string
+  date: string
+}
+
 export interface AppData {
   participants: Participant[]
   settings: ShiftSettings
   schedule: Shift[]
   historicalShifts: Shift[]
   manualShifts: Shift[]
+  offDays: OffDay[]
 }
 
 export type FillMode = 'fill-missing-people' | 'ignore-existing-positions'

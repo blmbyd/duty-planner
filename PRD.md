@@ -36,7 +36,8 @@ Produkt ma ograniczyć ręczną koordynację i zapewnić powtarzalny, zrozumiał
 - Synchronizacja z chmurą
 - Przechowywanie danych po stronie serwera
 - Ręczna edycja harmonogramu metodą przeciągnij i upuść
-- Zaawansowane zarządzanie urlopami lub dostępnością
+- Zaawansowane zarządzanie urlopami lub dostępnością per uczestnik
+- Cykliczne dni wolne określane regułami (np. każdy piątek)
 - Kompletne słowniki dla języków innych niż polski (infrastruktura i18n istnieje, ale drugi język nie jest dostarczony w tej iteracji)
 
 ## Użytkownicy docelowi
@@ -127,6 +128,7 @@ Generator musi:
 - wyliczać wszystkie wymagane daty na podstawie bazowej częstotliwości i skonfigurowanych dni specjalnych,
 - zachowywać wcześniej wygenerowane wpisy harmonogramu,
 - dodawać wyłącznie brakujące dyżury,
+- pomijać daty oznaczone jako dni wolne — dzień wolny ma pierwszeństwo nad dostępnością wynikającą z bazowej częstotliwości i dni specjalnych,
 - w trybie uzupełniania brakujących osób wykrywać niekompletne istniejące dyżury i dopisywać do nich brakującą obsadę bez nadpisywania już przypisanych uczestników,
 - zwracać kompletny, uporządkowany harmonogram dla zadanego okresu.
 
@@ -143,6 +145,7 @@ Kryteria akceptacji:
 
 - Istniejące wpisy harmonogramu z poprawną obsadą pozostają niezmienione po ponownym generowaniu.
 - Nowe dyżury są dodawane wyłącznie dla brakujących dat.
+- Daty oznaczone jako dni wolne są pomijane w generowaniu niezależnie od tego, czy wynikają z bazowej częstotliwości czy z dni specjalnych.
 - W trybie uzupełniania brakujących osób: dyżur jest uznawany za niekompletny, gdy zwykły dyżur nie posiada wymaganej liczby uczestników lub nie ma osoby z kluczami, a dzień specjalny ma mniej osób niż zdefiniowana liczba uczestników dla danego dnia.
 - Tryb uzupełniania jest wybierany przez użytkownika za pomocą przełącznika widocznego w panelu harmonogramu, gdy harmonogram już istnieje.
 - Wynikowy harmonogram jest posortowany chronologicznie.
@@ -155,6 +158,7 @@ Użytkownik musi móc przeglądać połączoną listę dyżurów historycznych i
 Kryteria akceptacji:
 
 - Każdy dyżur pokazuje datę, uczestników i status.
+- Dni wolne są widoczne w tabeli jako osobne wiersze ze statusem „Dzień wolny‟ i pustą kolumną uczestników; użytkownik może je usunąć bezpośrednio z tabeli.
 - Dni specjalne są oznaczane w harmonogramie.
 - Użytkownik może usuwać pojedyncze dyżury z listy.
 - Użytkownik może edytować skład uczestników i powiązany dzień specjalny dowolnego dyżuru za pomocą przycisku ołówka widocznego w wierszu tabeli. Jeśli zdefiniowano co najmniej jeden dzień specjalny, formularz edycji zawiera pole wyboru umożliwiające przypisanie lub odłączenie dnia specjalnego.
@@ -175,7 +179,7 @@ Użytkownik musi móc eksportować i importować pełny stan aplikacji jako JSON
 
 Kryteria akceptacji:
 
-- Eksport zawiera uczestników, ustawienia, harmonogram i historyczne dyżury.
+- Eksport zawiera uczestników, ustawienia, harmonogram, historyczne dyżury, ręczne dyżury i dni wolne.
 - Import obsługuje zarówno aktualny opakowany format kopii zapasowej, jak i zwykły obiekt danych dla zgodności.
 - Niepoprawny JSON albo nieprawidłowa struktura zwraca czytelny komunikat błędu.
 - Import całkowicie zastępuje bieżące dane lokalne.
@@ -198,9 +202,10 @@ Kryteria akceptacji:
 3. Użytkownik ustawia częstotliwość, liczebność dyżuru i zakres dat.
 4. Użytkownik opcjonalnie dodaje dni specjalne.
 5. Użytkownik opcjonalnie dodaje historyczne dyżury.
-6. Użytkownik generuje harmonogram.
-7. Użytkownik przegląda wynikowe przydziały i statystyki, w razie potrzeby edytuje skład uczestników wybranych dyżurów.
-8. Użytkownik eksportuje dane, jeśli chce zachować przenośną kopię zapasową.
+6. Użytkownik opcjonalnie dodaje dni wolne.
+7. Użytkownik generuje harmonogram.
+8. Użytkownik przegląda wynikowe przydziały i statystyki, w razie potrzeby edytuje skład uczestników wybranych dyżurów.
+9. Użytkownik eksportuje dane, jeśli chce zachować przenośną kopię zapasową.
 
 ## Przypadki brzegowe
 

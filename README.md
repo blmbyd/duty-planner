@@ -14,6 +14,7 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 - Obsługuje comiesięczne dni specjalne, takie jak drugi poniedziałek albo ostatni piątek miesiąca, z własną liczbą osób na dyżurze.
 - Uwzględnia historyczne dyżury, aby wcześniejsze przydziały wpływały na przyszłe wyrównanie obciążenia.
 - Pozwala ręcznie dodać dyżur na dowolną datę — z przeszłości lub przyszłości — który blokuje termin i wpływa na sprawiedliwość planowania.
+- Umożliwia ręczne oznaczenie wybranych dat jako **dni wolnych** (bez dyżuru). Dni wolne są pomijane przez generator — żaden dyżur nie jest tworzony na tak oznaczonej dacie — i nie wpływają na statystyki sprawiedliwości obciążeń uczestników.
 - Umożliwia edycję składu uczestników i powiązanego dnia specjalnego dowolnego dyżuru: ręcznego, historycznego lub wygenerowanego — bez zmiany daty dyżuru. Jeśli w ustawieniach zdefiniowano co najmniej jeden dzień specjalny, formularz edycji wyświetla listę wyboru umożliwiającą przypisanie lub odłączenie dnia specjalnego od dyżuru.
 - Blokuje dodanie ręcznego dyżuru, jeśli dana data jest już zajęta w harmonogramie lub wśród wcześniej dodanych wpisów ręcznych.
 - Zachowuje istniejące wpisy harmonogramu i przy ponownym generowaniu uzupełnia tylko brakujące daty.
@@ -28,7 +29,8 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 3. Opcjonalnie zdefiniuj powtarzalne dni specjalne z inną liczbą osób.
 4. Opcjonalnie dodaj historyczne dyżury, aby zachować ciągłość sprawiedliwego rozkładu.
 5. Opcjonalnie dodaj ręczne dyżury na konkretne daty (w przeszłości lub przyszłości), które mają być trwale wpisane w harmonogram i chronione przed nadpisaniem przez generator.
-6. Opcjonalnie edytuj skład uczestników i powiązany dzień specjalny dowolnego istniejącego dyżuru za pomocą przycisku ołówka przy wierszu w tabeli harmonogramu.
+6. Opcjonalnie oznacz wybrane daty jako dni wolne, aby generator je pominął.
+7. Opcjonalnie edytuj skład uczestników i powiązany dzień specjalny dowolnego istniejącego dyżuru za pomocą przycisku ołówka przy wierszu w tabeli harmonogramu.
 7. Wygeneruj lub uzupełnij harmonogram.
 8. W razie potrzeby wyeksportuj stan do pliku kopii zapasowej.
 
@@ -42,6 +44,7 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 - W trybie uzupełniania brakujących osób sprawdza, czy każdy istniejący dyżur ma właściwy skład: zwykły dyżur wymaga co najmniej jednej osoby z kluczami i wymaganej liczby uczestników, dzień specjalny wymaga liczby osób zgodnej z konfiguracją. Niekompletne dyżury są uzupełniane bez zmiany już przypisanych uczestników.
 - Łączy dyżury historyczne, ręczne i już zaplanowane podczas obliczania sprawiedliwości przydziału.
 - Wyklucza daty zajęte przez ręczne dyżury z puli generowanych terminów — ręczne wpisy nie są nadpisywane.
+- Wyklucza daty oznaczone jako dni wolne z puli generowanych terminów. Dzień wolny ma wyższy priorytet niż dzień specjalny: jeśli dzień specjalny wypada na datę oznaczoną jako wolna, generator nie tworzy tam żadnego dyżuru.
 - Tworzy wiele kandydatów harmonogramu i zachowuje najlepiej oceniony wynik.
 - Przy ocenie każdego kandydata punktuje trzy kryteria: minimalne odstępy między dyżurami tej samej osoby, różnorodność par uczestników oraz równomierność przydziałów do dni specjalnych osobno dla każdego typu dnia specjalnego.
 - Preferuje osoby z mniejszą liczbą przydziałów i w miarę możliwości unika natychmiastowych powtórzeń tych samych osób.
@@ -51,9 +54,9 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 
 - Bieżące dane są przechowywane w local storage przeglądarki.
 - Eksport tworzy wersjonowany plik kopii zapasowej JSON o nazwie w stylu `duty-planner-backup-YYYY-MM-DD.json`.
-- Import przywraca uczestników, ustawienia, planowany harmonogram, historyczne dyżury oraz ręczne dyżury.
+- Import przywraca uczestników, ustawienia, planowany harmonogram, historyczne dyżury, ręczne dyżury oraz dni wolne.
 - Import całkowicie zastępuje bieżący stan zapisany w przeglądarce.
-- Pliki eksportowane w poprzednich wersjach aplikacji (bez pola `manualShifts`) są nadal obsługiwane — brakujące pole jest uzupełniane pustą tablicą.
+- Pliki eksportowane w poprzednich wersjach aplikacji (bez pola `manualShifts` lub `offDays`) są nadal obsługiwane — brakujące pola są uzupełniane pustą tablicą.
 - Preferencja językowa jest przechowywana oddzielnie w local storage pod kluczem `duty-planner:v1:language`.
 
 ## Wielojęzyczność

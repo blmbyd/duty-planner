@@ -31,6 +31,9 @@ export const pl: Translations = {
       importError: 'Blad podczas importu danych',
       fileReadError: 'Blad odczytu pliku',
       invalidFile: 'Nie mozna odczytac pliku.',
+      offDayAdded: 'Dzien wolny dodany',
+      offDayDeleted: 'Dzien wolny usuniety',
+      offDayConflict: 'Na ten dzien istnieje juz dyzur, reczny wpis lub inny dzien wolny',
     },
   },
   schedule: {
@@ -60,6 +63,7 @@ export const pl: Translations = {
       done: 'Wykonany',
       planned: 'Zaplanowany',
       manual: 'Reczny',
+      offDay: 'Dzien wolny',
     },
     unknown: 'Nieznany',
     specialDay: 'Dzien specjalny',
@@ -179,5 +183,13 @@ export const pl: Translations = {
     desc: 'Cos nieoczekiwanego sie wydarzylo. Poniz szczegoly bledu. Poinformuj autora aplikacji o problemie.',
     errorDetails: 'Szczegoly bledu:',
     btnRetry: 'Sprobuj ponownie',
+  },
+  offDays: {
+    title: 'Dni Wolne',
+    none: 'Brak dni wolnych',
+    countLabel: (count) =>
+      `${count} ${count === 1 ? 'dzien' : 'dni'} wolnych`,
+    dateLabel: 'Data dnia wolnego',
+    addBtn: 'Dodaj dzien wolny',
   },
 }

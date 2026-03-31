@@ -28,6 +28,9 @@ export interface Translations {
       importError: string
       fileReadError: string
       invalidFile: string
+      offDayAdded: string
+      offDayDeleted: string
+      offDayConflict: string
     }
   }
   schedule: {
@@ -57,6 +60,7 @@ export interface Translations {
       done: string
       planned: string
       manual: string
+      offDay: string
     }
     unknown: string
     specialDay: string
@@ -172,5 +176,12 @@ export interface Translations {
     desc: string
     errorDetails: string
     btnRetry: string
+  }
+  offDays: {
+    title: string
+    none: string
+    countLabel: (count: number) => string
+    dateLabel: string
+    addBtn: string
   }
 }

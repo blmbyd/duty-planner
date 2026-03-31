@@ -22,7 +22,7 @@ import {
   Star,
   PencilSimple,
 } from '@phosphor-icons/react'
-import { Participant, Shift, ShiftSettings, FillMode } from '@/lib/types'
+import { Participant, Shift, ShiftSettings, FillMode, OffDay } from '@/lib/types'
 import { formatDate, isPastDate } from '@/lib/schedule/date-utils'
 import { AddHistoricalShiftDialog } from '@/components/AddHistoricalShiftDialog'
 import { AddShiftDialog } from '@/components/AddShiftDialog'
@@ -33,12 +33,14 @@ interface SchedulePanelProps {
   schedule: Shift[]
   historicalShifts: Shift[]
   manualShifts: Shift[]
+  offDays: OffDay[]
   settings: ShiftSettings
   isGenerating: boolean
   historicalDialogOpen: boolean
   manualDialogOpen: boolean
   onGenerate: (fillMode: FillMode) => void
   onDeleteShift: (id: string, isHistorical: boolean, isManual: boolean) => void
+  onDeleteOffDay: (id: string) => void
   onUpdateShift: (id: string, participants: string[], isHistorical: boolean, isManual: boolean, specialDayId?: string | null) => void
   onAddHistorical: (shift: Shift) => void
   onAddManual: (shift: Shift) => 'ok' | 'conflict'
@@ -51,12 +53,14 @@ export function SchedulePanel({
   schedule,
   historicalShifts,
   manualShifts,
+  offDays,
   settings,
   isGenerating,
   historicalDialogOpen,
   manualDialogOpen,
   onGenerate,
   onDeleteShift,
+  onDeleteOffDay,
   onUpdateShift,
   onAddHistorical,
   onAddManual,
@@ -92,9 +96,16 @@ export function SchedulePanel({
     setEditingShift(undefined)
   }
 
-  const allShifts = [...historicalShifts, ...manualShifts, ...schedule].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
+  type DisplayItem =
+    | { kind: 'shift'; data: Shift }
+    | { kind: 'offDay'; data: OffDay }
+
+  const allItems: DisplayItem[] = [
+    ...historicalShifts.map((s) => ({ kind: 'shift' as const, data: s })),
+    ...manualShifts.map((s) => ({ kind: 'shift' as const, data: s })),
+    ...schedule.map((s) => ({ kind: 'shift' as const, data: s })),
+    ...offDays.map((d) => ({ kind: 'offDay' as const, data: d })),
+  ].sort((a, b) => new Date(a.data.date).getTime() - new Date(b.data.date).getTime())
 
   const getParticipantName = (id: string) => {
     const p = participants.find((p) => p.id === id)
@@ -152,7 +163,7 @@ export function SchedulePanel({
                 {t.schedule.fillMode.label}
               </Label>
             </div>
-          {allShifts.length > 0 && (
+          {allItems.length > 0 && (
             <CardDescription>
               {historicalShifts.length > 0 && t.schedule.historical(historicalShifts.length)}
               {historicalShifts.length > 0 && (manualShifts.length > 0 || schedule.length > 0) && ' \u2022 '}
@@ -164,7 +175,7 @@ export function SchedulePanel({
           )}
         </CardHeader>
         <CardContent>
-          {allShifts.length === 0 ? (
+          {allItems.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border bg-muted/20 p-12 text-center">
               <CalendarDots className="mx-auto mb-4 text-muted-foreground" size={48} />
               <h3 className="mb-2 text-lg font-semibold text-foreground">{t.schedule.empty.title}</h3>
@@ -192,7 +203,41 @@ export function SchedulePanel({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {allShifts.map((shift, index) => {
+                  {allItems.map((item, index) => {
+                    if (item.kind === 'offDay') {
+                      const od = item.data
+                      return (
+                        <TableRow key={od.id}>
+                          <TableCell className="font-mono font-medium">
+                            {String(index + 1).padStart(2, '0')}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {formatDate(od.date, locale)}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">&mdash;</span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-orange-600 border-orange-300 bg-orange-50">
+                              {t.schedule.status.offDay}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => onDeleteOffDay(od.id)}
+                              >
+                                <Trash size={16} />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    }
+
+                    const shift = item.data
                     const rowStatus = getRowStatus(shift)
                     const isDimmed = rowStatus === 'historical'
                     return (
