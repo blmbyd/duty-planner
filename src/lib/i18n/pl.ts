@@ -192,4 +192,16 @@ export const pl: Translations = {
     dateLabel: 'Data dnia wolnego',
     addBtn: 'Dodaj dzien wolny',
   },
+  participantAbsences: {
+    title: 'Nieobecnosci',
+    none: 'Brak nieobecnosci',
+    addBtn: 'Dodaj nieobecnosc',
+    startDateLabel: 'Od',
+    endDateLabel: 'Do',
+    validationEndBeforeStart: 'Data konca musi byc pozna lub rowna dacie poczatku',
+    toast: {
+      added: 'Nieobecnosc dodana',
+      deleted: 'Nieobecnosc usunieta',
+    },
+  },
 }

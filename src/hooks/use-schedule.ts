@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useLocalStorage } from './use-local-storage'
-import { Shift, Participant, ShiftSettings, FillMode, OffDay } from '@/lib/types'
+import { Shift, Participant, ShiftSettings, FillMode, OffDay, ParticipantAbsence } from '@/lib/types'
 import { generateSchedule } from '@/lib/schedule-generator'
 
 export function useSchedule() {
@@ -16,7 +16,8 @@ export function useSchedule() {
       historicalShifts: Shift[],
       manualShifts: Shift[],
       fillMode: FillMode = 'ignore-existing-positions',
-      offDays: OffDay[] = []
+      offDays: OffDay[] = [],
+      participantAbsences: ParticipantAbsence[] = []
     ): Promise<{ added: number; updated: number; total: number; updatedManualShifts: import('@/lib/types').Shift[] }> => {
       setIsGenerating(true)
       try {
@@ -28,7 +29,8 @@ export function useSchedule() {
           currentSchedule,
           manualShifts,
           fillMode,
-          offDays
+          offDays,
+          participantAbsences
         )
         setSchedule(result.schedule)
         return {

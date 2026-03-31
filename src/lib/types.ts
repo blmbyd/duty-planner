@@ -37,6 +37,13 @@ export interface OffDay {
   date: string
 }
 
+export interface ParticipantAbsence {
+  id: string
+  participantId: string
+  startDate: string
+  endDate: string
+}
+
 export interface AppData {
   participants: Participant[]
   settings: ShiftSettings
@@ -44,6 +51,7 @@ export interface AppData {
   historicalShifts: Shift[]
   manualShifts: Shift[]
   offDays: OffDay[]
+  participantAbsences: ParticipantAbsence[]
 }
 
 export type FillMode = 'fill-missing-people' | 'ignore-existing-positions'

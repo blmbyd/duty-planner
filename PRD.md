@@ -36,7 +36,7 @@ Produkt ma ograniczyć ręczną koordynację i zapewnić powtarzalny, zrozumiał
 - Synchronizacja z chmurą
 - Przechowywanie danych po stronie serwera
 - Ręczna edycja harmonogramu metodą przeciągnij i upuść
-- Zaawansowane zarządzanie urlopami lub dostępnością per uczestnik
+- Zaawansowane zarządzanie urlopami lub dostępnością per uczestnik *(nieobecności w formie pojedynczych dni i zakresów dat są w zakresie; powtarzalne reguły cykliczne pozostają poza zakresem)*
 - Cykliczne dni wolne określane regułami (np. każdy piątek)
 - Kompletne słowniki dla języków innych niż polski (infrastruktura i18n istnieje, ale drugi język nie jest dostarczony w tej iteracji)
 
@@ -62,13 +62,20 @@ Użytkownik musi móc:
 - dodać uczestnika z imieniem, nazwiskiem i statusem posiadacza kluczy,
 - edytować istniejącego uczestnika,
 - usunąć uczestnika,
-- uzupełnić aplikację przykładowymi uczestnikami do szybkiego testowania.
+- uzupełnić aplikację przykładowymi uczestnikami do szybkiego testowania,
+- przypisać uczestnikowi nieobecności w formie pojedynczego dnia lub ciągłego zakresu dat od-do,
+- usunąć nieobecność uczestnika.
 
 Kryteria akceptacji:
 
 - Dane uczestników są zapisywane lokalnie w przeglądarce.
 - Interfejs wyraźnie odróżnia posiadaczy kluczy od pozostałych uczestników.
 - Przy pustej liście uczestników pokazywana jest wskazówka, jaki powinien być następny krok.
+- Nieobecności są widoczne i zarządzane bezpośrednio w panelu uczestników, przy konkretnej osobie — dostępne po kliknięciu ikony kalendarza.
+- Formularz nieobecności obsługuje zarówno pojedynczy dzień (pole od i do ustawione na tę samą datę), jak i zakres od-do.
+- Dodanie nieobecności z datą końca wcześniejszą niż data początku jest blokowane z czytelnym komunikatem.
+- Usunięcie uczestnika usuwa kaskadowo wszystkie jego nieobecności.
+- Nieobecności uczestników są uwzględniane w eksporcie i imporcie danych.
 
 ### 2. Ustawienia dyżurów
 
@@ -129,6 +136,7 @@ Generator musi:
 - zachowywać wcześniej wygenerowane wpisy harmonogramu,
 - dodawać wyłącznie brakujące dyżury,
 - pomijać daty oznaczone jako dni wolne — dzień wolny ma pierwszeństwo nad dostępnością wynikającą z bazowej częstotliwości i dni specjalnych,
+- twardо wykluczać uczestnika z puli kandydatów we wszystkich dniach objętych jego nieobecnością — zarówno w standardowym przepływie, jak i w trybie uzupełniania brakujących osób; blokada obejmuje też fallbackowe ścieżki wyboru,
 - w trybie uzupełniania brakujących osób wykrywać niekompletne istniejące dyżury i dopisywać do nich brakującą obsadę bez nadpisywania już przypisanych uczestników,
 - zwracać kompletny, uporządkowany harmonogram dla zadanego okresu.
 
@@ -179,8 +187,9 @@ Użytkownik musi móc eksportować i importować pełny stan aplikacji jako JSON
 
 Kryteria akceptacji:
 
-- Eksport zawiera uczestników, ustawienia, harmonogram, historyczne dyżury, ręczne dyżury i dni wolne.
+- Eksport zawiera uczestników, ustawienia, harmonogram, historyczne dyżury, ręczne dyżury, dni wolne i nieobecności uczestników.
 - Import obsługuje zarówno aktualny opakowany format kopii zapasowej, jak i zwykły obiekt danych dla zgodności.
+- Pliki eksportowane przed wprowadzeniem nieobecności uczestników są nadal poprawnie importowane — brakujące pole `participantAbsences` jest uzupełniane pustą tablicą.
 - Niepoprawny JSON albo nieprawidłowa struktura zwraca czytelny komunikat błędu.
 - Import całkowicie zastępuje bieżące dane lokalne.
 
@@ -203,7 +212,8 @@ Kryteria akceptacji:
 4. Użytkownik opcjonalnie dodaje dni specjalne.
 5. Użytkownik opcjonalnie dodaje historyczne dyżury.
 6. Użytkownik opcjonalnie dodaje dni wolne.
-7. Użytkownik generuje harmonogram.
+7. Użytkownik opcjonalnie przypisuje nieobecności wybranym uczestnikom (pojedynczy dzień lub zakres od-do) za pomocą ikony kalendarza przy każdej osobie w panelu uczestników.
+8. Użytkownik generuje harmonogram.
 8. Użytkownik przegląda wynikowe przydziały i statystyki, w razie potrzeby edytuje skład uczestników wybranych dyżurów.
 9. Użytkownik eksportuje dane, jeśli chce zachować przenośną kopię zapasową.
 

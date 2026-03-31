@@ -1,4 +1,4 @@
-import { Participant, ShiftSettings, Shift, FillMode, OffDay } from '../types'
+import { Participant, ShiftSettings, Shift, FillMode, OffDay, ParticipantAbsence } from '../types'
 import { getDaysBetweenDates } from './date-utils'
 import { getSpecialDaysInRange, SpecialDayOccurrence } from './special-days'
 import { shuffleArray, scoreSchedule } from './scoring'
@@ -10,13 +10,33 @@ export interface GenerateResult {
   updatedManualShifts: Shift[]
 }
 
+function buildAbsenceLookup(absences: ParticipantAbsence[]): Map<string, Set<string>> {
+  const lookup = new Map<string, Set<string>>()
+  for (const absence of absences) {
+    if (!lookup.has(absence.participantId)) {
+      lookup.set(absence.participantId, new Set())
+    }
+    const dates = lookup.get(absence.participantId)!
+    const current = new Date(absence.startDate)
+    const end = new Date(absence.endDate)
+    while (current <= end) {
+      dates.add(
+        `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`
+      )
+      current.setDate(current.getDate() + 1)
+    }
+  }
+  return lookup
+}
+
 function buildShiftForSpecialDay(
   date: string,
   occurrence: SpecialDayOccurrence,
   participants: Participant[],
   participantShiftCounts: Map<string, number>,
   participantSpecialDayCountsPerDay: Map<string, Map<string, number>>,
-  recentShifts: Shift[]
+  recentShifts: Shift[],
+  absenceLookup: Map<string, Set<string>>
 ): string[] {
   const shiftParticipants: string[] = []
   const peopleCount = occurrence.peopleCount
@@ -24,6 +44,7 @@ function buildShiftForSpecialDay(
 
   const available = shuffleArray(
     participants.filter((p) => {
+      if (absenceLookup.get(p.id)?.has(date)) return false
       const lastTwo = recentShifts.slice(-2)
       return !lastTwo.some((s) => s.participants.includes(p.id))
     })
@@ -52,7 +73,7 @@ function buildShiftForSpecialDay(
 
   if (shiftParticipants.length < peopleCount) {
     const fallback = shuffleArray(
-      participants.filter((p) => !shiftParticipants.includes(p.id))
+      participants.filter((p) => !shiftParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(date))
     ).sort((a, b) => (specialDayCounts.get(a.id) || 0) - (specialDayCounts.get(b.id) || 0))
 
     for (const person of fallback) {
@@ -73,12 +94,14 @@ function buildShiftForRegularDay(
   regularPeople: Participant[],
   participants: Participant[],
   participantShiftCounts: Map<string, number>,
-  recentShifts: Shift[]
+  recentShifts: Shift[],
+  absenceLookup: Map<string, Set<string>>
 ): string[] {
   const shiftParticipants: string[] = []
 
   const availableSpecial = shuffleArray(
     specialPeople.filter((p) => {
+      if (absenceLookup.get(p.id)?.has(date)) return false
       const lastTwo = recentShifts.slice(-2)
       return !lastTwo.some((s) => s.participants.includes(p.id))
     })
@@ -94,21 +117,26 @@ function buildShiftForRegularDay(
       (participantShiftCounts.get(availableSpecial[0].id) || 0) + 1
     )
   } else if (specialPeople.length > 0) {
-    const fallbackSpecial = shuffleArray(specialPeople).sort(
+    const fallbackSpecial = shuffleArray(
+      specialPeople.filter((p) => !absenceLookup.get(p.id)?.has(date))
+    ).sort(
       (a, b) =>
         (participantShiftCounts.get(a.id) || 0) - (participantShiftCounts.get(b.id) || 0)
     )[0]
-    shiftParticipants.push(fallbackSpecial.id)
-    participantShiftCounts.set(
-      fallbackSpecial.id,
-      (participantShiftCounts.get(fallbackSpecial.id) || 0) + 1
-    )
+    if (fallbackSpecial) {
+      shiftParticipants.push(fallbackSpecial.id)
+      participantShiftCounts.set(
+        fallbackSpecial.id,
+        (participantShiftCounts.get(fallbackSpecial.id) || 0) + 1
+      )
+    }
   }
 
   const remainingSlots = peopleCount - shiftParticipants.length
 
   const availableRegular = shuffleArray(
     regularPeople.filter((p) => {
+      if (absenceLookup.get(p.id)?.has(date)) return false
       const lastTwo = recentShifts.slice(-2)
       return !lastTwo.some((s) => s.participants.includes(p.id))
     })
@@ -127,7 +155,9 @@ function buildShiftForRegularDay(
 
   if (shiftParticipants.length < peopleCount) {
     const allAvailable = shuffleArray(
-      participants.filter((p) => !shiftParticipants.includes(p.id))
+      participants.filter(
+        (p) => !shiftParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(date)
+      )
     ).sort(
       (a, b) =>
         (participantShiftCounts.get(a.id) || 0) - (participantShiftCounts.get(b.id) || 0)
@@ -153,7 +183,8 @@ export function generateSchedule(
   existingSchedule: Shift[] = [],
   manualShifts: Shift[] = [],
   fillMode: FillMode = 'ignore-existing-positions',
-  offDays: OffDay[] = []
+  offDays: OffDay[] = [],
+  participantAbsences: ParticipantAbsence[] = []
 ): GenerateResult {
   const safeSettings: ShiftSettings = {
     ...settings,
@@ -182,6 +213,7 @@ export function generateSchedule(
   const existingDatesSet = new Set(existingSchedule.map((s) => s.date))
   const manualDatesSet = new Set(manualShifts.map((s) => s.date))
   const offDaysSet = new Set(offDays.map((d) => d.date))
+  const absenceLookup = buildAbsenceLookup(participantAbsences)
   const specialDayDates = specialDayOccurrences.map((occ) => occ.date)
   const allRequiredDates = [...new Set([...allDates, ...specialDayDates])].sort()
   const missingDates = allRequiredDates.filter(
@@ -278,7 +310,8 @@ export function generateSchedule(
             participants,
             participantShiftCounts,
             participantSpecialDayCountsPerDay,
-            recentShifts
+            recentShifts,
+            absenceLookup
           )
         : buildShiftForRegularDay(
             date,
@@ -287,7 +320,8 @@ export function generateSchedule(
             regularPeople,
             participants,
             participantShiftCounts,
-            recentShifts
+            recentShifts,
+            absenceLookup
           )
 
       const newShift: Shift = {
@@ -345,7 +379,9 @@ export function generateSchedule(
         )
         if (!hasKeyHolder) {
           const available = shuffleArray(
-            specialPeople.filter((p) => !currentParticipants.includes(p.id))
+            specialPeople.filter(
+              (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
+            )
           ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
           if (available.length > 0) {
             currentParticipants.push(available[0].id)
@@ -355,7 +391,9 @@ export function generateSchedule(
       }
       if (currentParticipants.length < requiredCount) {
         const available = shuffleArray(
-          participants.filter((p) => !currentParticipants.includes(p.id))
+          participants.filter(
+            (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
+          )
         ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
         for (const person of available) {
           if (currentParticipants.length >= requiredCount) break
@@ -383,7 +421,9 @@ export function generateSchedule(
         )
         if (!hasKeyHolder) {
           const available = shuffleArray(
-            specialPeople.filter((p) => !currentParticipants.includes(p.id))
+            specialPeople.filter(
+              (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
+            )
           ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
           if (available.length > 0) {
             currentParticipants.push(available[0].id)
@@ -393,7 +433,9 @@ export function generateSchedule(
       }
       if (currentParticipants.length < requiredCount) {
         const available = shuffleArray(
-          participants.filter((p) => !currentParticipants.includes(p.id))
+          participants.filter(
+            (p) => !currentParticipants.includes(p.id) && !absenceLookup.get(p.id)?.has(shift.date)
+          )
         ).sort((a, b) => (fillCounts.get(a.id) || 0) - (fillCounts.get(b.id) || 0))
         for (const person of available) {
           if (currentParticipants.length >= requiredCount) break

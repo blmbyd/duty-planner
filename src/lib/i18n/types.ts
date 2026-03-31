@@ -184,4 +184,16 @@ export interface Translations {
     dateLabel: string
     addBtn: string
   }
+  participantAbsences: {
+    title: string
+    none: string
+    addBtn: string
+    startDateLabel: string
+    endDateLabel: string
+    validationEndBeforeStart: string
+    toast: {
+      added: string
+      deleted: string
+    }
+  }
 }
