@@ -23,6 +23,7 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 - Oferuje dwa tryby uzupełniania harmonogramu: domyślny tryb ignoruje istniejące pozycje i dodaje tylko nowe daty, a tryb uzupełniania brakujących osób wykrywa niekompletne dyżury i dopisuje do nich brakującą obsadę (osoby z kluczami i dodatkowych uczestników).
 - Pokazuje lekkie statystyki udziału uczestników dla dyżurów planowanych i historycznych.
 - Eksportuje i importuje pełny stan aplikacji jako JSON.
+- Umożliwia wygenerowanie wydruku harmonogramu jako osobna strona HTML — otwierana w nowej karcie przeglądarki — obejmującego dyżury planowane, historyczne i dni wolne z zakresu dat skonfigurowanego w ustawieniach, wraz z nagłówkiem zawierającym metadane okresu i częstotliwości.
 
 ## Główny przebieg pracy
 
@@ -36,7 +37,8 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 8. Opcjonalnie uzupelnij obsade wybranego planowanego dyzuru za pomoca przycisku "Uzupelnij dzien" w wierszu tabeli — przycisk dopisuje brakujaca obsluge bez zmiany pozostalych dni.
 9. Opcjonalnie edytuj sklad uczestnikow i powiazany dzien specjalny dowolnego istniejacego dyzuru za pomoca przycisku olowka przy wierszu w tabeli harmonogramu.
 10. Wygeneruj lub uzupełnij harmonogram.
-11. W razie potrzeby wyeksportuj stan do pliku kopii zapasowej.
+12. Opcjonalnie otwórz widok do wydruku za pomocą przycisku "Drukuj" w panelu harmonogramu — wydruk obejmuje zaplanowane dyżury, historyczne dyżury i dni wolne z bieżącego zakresu dat ustawień.
+13. W razie potrzeby wyeksportuj stan do pliku kopii zapasowej.
 
 ## Zasady planowania
 
@@ -64,6 +66,7 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 - Import całkowicie zastępuje bieżący stan zapisany w przeglądarce.
 - Pliki eksportowane w poprzednich wersjach aplikacji (z polem `manualShifts`, bez `offDays` lub bez `participantAbsences`) są nadal obsługiwane — wpisy z `manualShifts` są automatycznie scalane do wspólnego harmonogramu, a brakujące pola uzupełniane pustymi tablicami.
 - Preferencja językowa jest przechowywana oddzielnie w local storage pod kluczem `duty-planner:v1:language`.
+- Wydruk harmonogramu generuje osobną stronę HTML otwieraną w nowej karcie przeglądarki; strona zawiera tabelę dyżurów dla bieżącego zakresu dat z ustawień, nagłówek z metadanymi i osadzony CSS dostosowany do druku — niezależnie od backupu JSON.
 
 ## Wielojęzyczność
 

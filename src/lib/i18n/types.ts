@@ -197,4 +197,31 @@ export interface Translations {
       deleted: string
     }
   }
+  printExport: {
+    btn: string
+    toast: {
+      success: string
+      error: string
+    }
+    labels: {
+      pageTitle: string
+      generatedAt: (date: string) => string
+      periodLabel: string
+      frequencyLabel: string
+      noData: string
+      column: {
+        no: string
+        date: string
+        participants: string
+        status: string
+        specialDay: string
+      }
+      status: {
+        historical: string
+        planned: string
+        offDay: string
+      }
+      keyHolder: string
+    }
+  }
 }

@@ -14,10 +14,11 @@ import { SpecialDaysManager } from '@/components/SpecialDaysManager'
 import { OffDaysManager } from '@/components/OffDaysManager'
 import { Participant, Shift, FillMode, OffDay, ParticipantAbsence } from '@/lib/types'
 import { exportBackup, parseBackup } from '@/lib/backup'
+import { generateScheduleHTML, PrintExportLabels } from '@/lib/print-export'
 import { useTranslation } from '@/lib/i18n'
 
 function App() {
-  const { t, language, setLanguage } = useTranslation()
+  const { t, language, setLanguage, locale } = useTranslation()
   const participantsState = useParticipants()
   const { settings, update: updateSettings, updateSpecialDays, replace: replaceSettings } = useSettings()
   const scheduleState = useSchedule()
@@ -164,6 +165,45 @@ function App() {
     }
   }
 
+  const handlePrintExport = () => {
+    try {
+      const labels: PrintExportLabels = {
+        pageTitle: t.printExport.labels.pageTitle,
+        appTitle: t.app.title,
+        generatedAt: t.printExport.labels.generatedAt,
+        periodLabel: t.printExport.labels.periodLabel,
+        frequencyLabel: t.printExport.labels.frequencyLabel,
+        frequencyValue: t.schedule.frequency[settings.frequency],
+        noData: t.printExport.labels.noData,
+        column: t.printExport.labels.column,
+        status: t.printExport.labels.status,
+        keyHolder: t.printExport.labels.keyHolder,
+      }
+      const html = generateScheduleHTML(
+        {
+          participants: participantsState.participants,
+          settings,
+          schedule: scheduleState.schedule,
+          historicalShifts: historyState.historicalShifts,
+          offDays: offDaysState.offDays,
+          participantAbsences: absencesState.absences,
+        },
+        locale,
+        labels
+      )
+      const win = window.open('', '_blank')
+      if (!win) {
+        toast.error(t.printExport.toast.error)
+        return
+      }
+      win.document.write(html)
+      win.document.close()
+      toast.success(t.printExport.toast.success)
+    } catch {
+      toast.error(t.printExport.toast.error)
+    }
+  }
+
   const handleExport = () => {
     try {
       exportBackup({
@@ -287,6 +327,7 @@ function App() {
                 onHistoricalDialogChange={historyState.setDialogOpen}
                 onShiftDialogChange={scheduleState.setShiftDialogOpen}
                 onFillSingleDay={handleFillSingleDay}
+                onPrintExport={handlePrintExport}
               />
             </div>
           </div>

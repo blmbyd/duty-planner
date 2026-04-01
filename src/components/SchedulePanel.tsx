@@ -22,6 +22,7 @@ import {
   Star,
   PencilSimple,
   UserPlus,
+  Printer,
 } from '@phosphor-icons/react'
 import { Participant, Shift, ShiftSettings, FillMode, OffDay } from '@/lib/types'
 import { formatDate, isPastDate } from '@/lib/schedule/date-utils'
@@ -47,6 +48,7 @@ interface SchedulePanelProps {
   onHistoricalDialogChange: (open: boolean) => void
   onShiftDialogChange: (open: boolean) => void
   onFillSingleDay: (id: string) => void
+  onPrintExport: () => void
 }
 
 export function SchedulePanel({
@@ -67,6 +69,7 @@ export function SchedulePanel({
   onHistoricalDialogChange,
   onShiftDialogChange,
   onFillSingleDay,
+  onPrintExport,
 }: SchedulePanelProps) {
   const { t, locale } = useTranslation()
   const [fillMode, setFillMode] = useState<FillMode>('ignore-existing-positions')
@@ -127,6 +130,14 @@ export function SchedulePanel({
               <CardTitle>{t.schedule.title}</CardTitle>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={onPrintExport}
+                disabled={allItems.length === 0}
+              >
+                <Printer size={16} className="mr-2" />
+                {t.printExport.btn}
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => onShiftDialogChange(true)}

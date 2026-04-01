@@ -195,6 +195,22 @@ Kryteria akceptacji:
 - Niepoprawny JSON albo nieprawidłowa struktura zwraca czytelny komunikat błędu.
 - Import całkowicie zastępuje bieżące dane lokalne.
 
+### 9. Wydruk harmonogramu
+
+Użytkownik musi móc wygenerować widok harmonogramu do wydruku jako osobna strona HTML.
+
+Kryteria akceptacji:
+
+- W panelu harmonogramu dostępny jest przycisk "Drukuj", widoczny gdy harmonogram zawiera co najmniej jeden wpis.
+- Kliknięcie przycisku otwiera w nowej karcie lub oknie przeglądarki samodzielny dokument HTML z tabelą harmonogramu.
+- Wydruk obejmuje wyłącznie wpisy (dyżury planowane, historyczne i dni wolne) spełniające warunek daty w przedziale startDate–endDate z bieżących ustawień aplikacji.
+- Strona zawiera nagłówek z tytułem aplikacji, zakresem dat okresu, częstotliwością dyżurów i datą wygenerowania.
+- Tabela zawiera kolumny: numer porządkowy, data, uczestnicy (posiadacz kluczy oznaczony), status, dzień specjalny.
+- Dyżury historyczne i planowane są wizualnie odróżnione; dni wolne mają odrębny styl.
+- Strona HTML zawiera osadzony CSS dostosowany do druku (`@media print`): nagłówek tabeli powtarza się na każdej stronie, wiersze nie są dzielone, zbędne elementy interaktywne są ukryte.
+- Eksport wydruku HTML jest niezależny od mechanizmu backupu JSON — oba przepływy są rozdzielone.
+- Jeśli przeglądarka zablokuje otwarcie nowej karty, użytkownik otrzymuje czytelny komunikat toast z informacją o przyczynie.
+
 ### 9. Język interfejsu
 
 Aplikacja musi obsługiwać wybór języka interfejsu.
@@ -217,7 +233,8 @@ Kryteria akceptacji:
 7. Użytkownik opcjonalnie przypisuje nieobecności wybranym uczestnikom (pojedynczy dzień lub zakres od-do) za pomocą ikony kalendarza przy każdej osobie w panelu uczestników.
 8. Użytkownik generuje harmonogram.
 8. Użytkownik przegląda wynikowe przydziały i statystyki, w razie potrzeby edytuje skład uczestników wybranych dyżurów.
-9. Użytkownik eksportuje dane, jeśli chce zachować przenośną kopię zapasową.
+9. Opcjonalnie użytkownik otwiera widok do wydruku za pomocą przycisku "Drukuj" w panelu harmonogramu — wydruk obejmuje bieżący okres ustawień.
+10. Użytkownik eksportuje dane, jeśli chce zachować przenośną kopię zapasową.
 
 ## Przypadki brzegowe
 

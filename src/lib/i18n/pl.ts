@@ -205,4 +205,31 @@ export const pl: Translations = {
       deleted: 'Nieobecnosc usunieta',
     },
   },
+  printExport: {
+    btn: 'Drukuj',
+    toast: {
+      success: 'Otworzono widok do wydruku',
+      error: 'Nie mozna otworzyc widoku wydruku. Sprawdz, czy przegladarka nie blokuje nowych okien.',
+    },
+    labels: {
+      pageTitle: 'Harmonogram Dyzurow - Wydruk',
+      generatedAt: (date) => `Wygenerowano: ${date}`,
+      periodLabel: 'Okres',
+      frequencyLabel: 'Czestotliwosc',
+      noData: 'Brak dyzurow do wydruku w wybranym okresie.',
+      column: {
+        no: '#',
+        date: 'Data',
+        participants: 'Uczestnicy',
+        status: 'Status',
+        specialDay: 'Dzien specjalny',
+      },
+      status: {
+        historical: 'Wykonany',
+        planned: 'Zaplanowany',
+        offDay: 'Dzien wolny',
+      },
+      keyHolder: 'K',
+    },
+  },
 }
