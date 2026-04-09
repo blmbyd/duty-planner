@@ -16,7 +16,7 @@ export function useHistoricalShifts() {
       setHistoricalShifts((existing) => {
         const arr = existing || []
         if (arr.some((s) => s.id === shift.id)) return arr
-        return [...arr, { ...shift, isHistorical: true }]
+        return [...arr, shift]
       })
     },
     [setHistoricalShifts]
@@ -44,9 +44,7 @@ export function useHistoricalShifts() {
 
   const replace = useCallback(
     (incoming: Shift[]) => {
-      setHistoricalShifts(
-        (Array.isArray(incoming) ? incoming : []).map((s) => ({ ...s, isHistorical: true }))
-      )
+      setHistoricalShifts(Array.isArray(incoming) ? incoming : [])
     },
     [setHistoricalShifts]
   )

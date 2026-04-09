@@ -74,13 +74,14 @@ export function SchedulePanel({
   const { t, locale } = useTranslation()
   const [fillMode, setFillMode] = useState<FillMode>('ignore-existing-positions')
   const [editingShift, setEditingShift] = useState<Shift | undefined>()
+  const [editingShiftIsHistoricalSource, setEditingShiftIsHistoricalSource] = useState(false)
   const [editShiftDialogOpen, setEditShiftDialogOpen] = useState(false)
   const [editHistoricalDialogOpen, setEditHistoricalDialogOpen] = useState(false)
 
-  const handleOpenEdit = (shift: Shift) => {
-    const status = getRowStatus(shift)
+  const handleOpenEdit = (shift: Shift, isHistoricalSource: boolean) => {
     setEditingShift(shift)
-    if (status === 'historical') {
+    setEditingShiftIsHistoricalSource(isHistoricalSource)
+    if (isHistoricalSource) {
       setEditHistoricalDialogOpen(true)
     } else {
       setEditShiftDialogOpen(true)
@@ -89,35 +90,28 @@ export function SchedulePanel({
 
   const handleEditSave = (updatedShift: Shift) => {
     if (!editingShift) return
-    const status = getRowStatus(editingShift)
     onUpdateShift(
       editingShift.id,
       updatedShift.participants,
-      status === 'historical',
+      editingShiftIsHistoricalSource,
       updatedShift.specialDayId !== undefined ? updatedShift.specialDayId : null
     )
     setEditingShift(undefined)
   }
 
   type DisplayItem =
-    | { kind: 'shift'; data: Shift }
+    | { kind: 'shift'; data: Shift; isHistoricalSource: boolean }
     | { kind: 'offDay'; data: OffDay }
 
   const allItems: DisplayItem[] = [
-    ...historicalShifts.map((s) => ({ kind: 'shift' as const, data: s })),
-    ...schedule.map((s) => ({ kind: 'shift' as const, data: s })),
+    ...historicalShifts.map((s) => ({ kind: 'shift' as const, data: s, isHistoricalSource: true })),
+    ...schedule.map((s) => ({ kind: 'shift' as const, data: s, isHistoricalSource: false })),
     ...offDays.map((d) => ({ kind: 'offDay' as const, data: d })),
   ].sort((a, b) => new Date(a.data.date).getTime() - new Date(b.data.date).getTime())
 
   const getParticipantName = (id: string) => {
     const p = participants.find((p) => p.id === id)
     return p ? `${p.firstName} ${p.lastName}` : t.schedule.unknown
-  }
-
-  const getRowStatus = (shift: Shift): 'historical' | 'planned' => {
-    if (shift.isHistorical || isPastDate(shift.date))
-      return 'historical'
-    return 'planned'
   }
 
   return (
@@ -249,8 +243,10 @@ export function SchedulePanel({
                     }
 
                     const shift = item.data
-                    const rowStatus = getRowStatus(shift)
-                    const isDimmed = rowStatus === 'historical'
+                    const isHistoricalSource = item.isHistoricalSource
+                    const isPast = isPastDate(shift.date)
+                    const isDimmed = isPast
+                    const canFill = !isHistoricalSource && !isPast
                     return (
                       <TableRow
                         key={shift.id}
@@ -301,7 +297,7 @@ export function SchedulePanel({
                           </div>
                         </TableCell>
                         <TableCell>
-                          {rowStatus === 'historical' && (
+                          {isPast && (
                             <Badge variant="outline" className="text-muted-foreground">
                               {t.schedule.status.done}
                             </Badge>
@@ -309,7 +305,7 @@ export function SchedulePanel({
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1 justify-end">
-                            {rowStatus !== 'historical' ? (
+                            {canFill ? (
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -327,7 +323,7 @@ export function SchedulePanel({
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => handleOpenEdit(shift)}
+                              onClick={() => handleOpenEdit(shift, isHistoricalSource)}
                             >
                               <PencilSimple size={16} />
                             </Button>
@@ -337,7 +333,7 @@ export function SchedulePanel({
                               onClick={() =>
                                 onDeleteShift(
                                   shift.id,
-                                  rowStatus === 'historical'
+                                  isHistoricalSource
                                 )
                               }
                             >
