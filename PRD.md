@@ -166,7 +166,7 @@ Użytkownik musi móc przeglądać połączoną listę dyżurów historycznych i
 Kryteria akceptacji:
 
 - Każdy dyżur pokazuje datę, uczestników i status.
-- Dni wolne są widoczne w tabeli jako osobne wiersze ze statusem „Dzień wolny‟ i pustą kolumną uczestników; użytkownik może je usunąć bezpośrednio z tabeli.
+- Dni wolne są widoczne w tabeli jako osobne wiersze ze statusem „Dzień wolny‟ i pustą kolumną uczestników; użytkownik może je usunąć bezpośrednio z tabeli. Dni wolne z datą wcześniejszą niż dzisiaj są wizualnie przygaszane, analogicznie do dyżurów z przeszłą datą.
 - Dni specjalne są oznaczane w harmonogramie.
 - Użytkownik może usuwać pojedyncze dyżury z listy.
 - Użytkownik może edytować skład uczestników i powiązany dzień specjalny dowolnego dyżuru za pomocą przycisku ołówka widocznego w wierszu tabeli. Jeśli zdefiniowano co najmniej jeden dzień specjalny, formularz edycji zawiera pole wyboru umożliwiające przypisanie lub odłączenie dnia specjalnego.

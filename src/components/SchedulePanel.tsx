@@ -207,8 +207,9 @@ export function SchedulePanel({
                   {allItems.map((item, index) => {
                     if (item.kind === 'offDay') {
                       const od = item.data
+                      const isOffDayPast = isPastDate(od.date)
                       return (
-                        <TableRow key={od.id}>
+                        <TableRow key={od.id} className={isOffDayPast ? 'opacity-60' : ''}>
                           <TableCell className="font-mono font-medium">
                             {String(index + 1).padStart(2, '0')}
                           </TableCell>
