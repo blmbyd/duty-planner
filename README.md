@@ -111,6 +111,27 @@ npm run build
 npm run lint
 ```
 
+## Publikacja na GitHub Pages
+
+Aplikacja jest automatycznie wdrażana na GitHub Pages po każdym pushu do gałęzi `main`. Adres produkcyjny: `https://blmbyd.github.io/duty-planner/`.
+
+### Jednorazowa konfiguracja repozytorium
+
+1. W ustawieniach repozytorium na GitHubie przejdź do sekcji **Settings > Pages**.
+2. W polu **Source** wybierz **GitHub Actions**.
+3. Zapisz ustawienia.
+
+Po tej konfiguracji każdy push do `main` uruchamia workflow `.github/workflows/deploy.yml`, który buduje projekt i publikuje katalog `dist/` na GitHub Pages.
+
+### Weryfikacja wdrożenia
+
+1. Po pushu przejdź do zakładki **Actions** w repozytorium i potwierdź, że job `deploy` zakończył się sukcesem.
+2. Otwórz `https://blmbyd.github.io/duty-planner/` i sprawdź, czy aplikacja ładuje się poprawnie.
+
+### Wdrożenie ręczne
+
+Workflow można też uruchomić ręcznie z zakładki **Actions > Deploy to GitHub Pages > Run workflow**.
+
 ## Struktura projektu
 
 - `src/components` zawiera główne panele interfejsu i dialogi.
