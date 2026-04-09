@@ -199,7 +199,6 @@ export function SchedulePanel({
                     <TableHead className="w-[100px]">{t.schedule.column.no}</TableHead>
                     <TableHead>{t.schedule.column.date}</TableHead>
                     <TableHead>{t.schedule.column.participants}</TableHead>
-                    <TableHead className="w-[120px]">{t.schedule.column.status}</TableHead>
                     <TableHead className="w-[100px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -221,7 +220,6 @@ export function SchedulePanel({
                               {t.schedule.status.offDay}
                             </Badge>
                           </TableCell>
-                          <TableCell></TableCell>
                           <TableCell>
                             <div className="flex gap-1 justify-end">
                               <Button size="icon" variant="ghost" disabled className="invisible">
@@ -296,13 +294,6 @@ export function SchedulePanel({
                               )
                             })}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {isPast && (
-                            <Badge variant="outline" className="text-muted-foreground">
-                              {t.schedule.status.done}
-                            </Badge>
-                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1 justify-end">
