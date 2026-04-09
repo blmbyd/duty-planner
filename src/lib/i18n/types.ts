@@ -127,6 +127,7 @@ export interface Translations {
     startDate: string
     endDate: string
     language: string
+    printTitle: string
     backup: {
       title: string
       export: string
@@ -205,21 +206,14 @@ export interface Translations {
     }
     labels: {
       pageTitle: string
-      generatedAt: (date: string) => string
       periodLabel: string
-      frequencyLabel: string
       noData: string
+      offDayLabel: string
       column: {
         no: string
         date: string
         participants: string
-        status: string
         specialDay: string
-      }
-      status: {
-        historical: string
-        planned: string
-        offDay: string
       }
       keyHolder: string
     }

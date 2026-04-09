@@ -120,6 +120,16 @@ export function SettingsPanel({ settings, maxPeople, language, onUpdate, onLangu
           </Select>
         </div>
 
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="printTitle">{t.settings.printTitle}</Label>
+          <Input
+            id="printTitle"
+            type="text"
+            value={settings.printTitle ?? ''}
+            onChange={(e) => onUpdate({ printTitle: e.target.value })}
+          />
+        </div>
+
         <Separator />
 
         <div className="flex flex-col gap-3">

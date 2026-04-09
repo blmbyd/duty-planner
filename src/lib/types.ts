@@ -22,6 +22,7 @@ export interface ShiftSettings {
   startDate: string
   endDate: string
   specialDays: SpecialDay[]
+  printTitle?: string
 }
 
 export interface Shift {
@@ -64,5 +65,6 @@ export const DEFAULT_SETTINGS: ShiftSettings = {
   peoplePerShift: 2,
   startDate: _fmt(new Date()),
   endDate: _fmt(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
-  specialDays: []
+  specialDays: [],
+  printTitle: ''
 }

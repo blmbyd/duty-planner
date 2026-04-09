@@ -169,14 +169,11 @@ function App() {
     try {
       const labels: PrintExportLabels = {
         pageTitle: t.printExport.labels.pageTitle,
-        appTitle: t.app.title,
-        generatedAt: t.printExport.labels.generatedAt,
+        appTitle: settings.printTitle?.trim() || t.app.title,
         periodLabel: t.printExport.labels.periodLabel,
-        frequencyLabel: t.printExport.labels.frequencyLabel,
-        frequencyValue: t.schedule.frequency[settings.frequency],
         noData: t.printExport.labels.noData,
+        offDayLabel: t.printExport.labels.offDayLabel,
         column: t.printExport.labels.column,
-        status: t.printExport.labels.status,
         keyHolder: t.printExport.labels.keyHolder,
       }
       const html = generateScheduleHTML(

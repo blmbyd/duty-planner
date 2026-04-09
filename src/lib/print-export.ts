@@ -4,22 +4,14 @@ import { formatDate, isPastDate } from './schedule/date-utils'
 export interface PrintExportLabels {
   pageTitle: string
   appTitle: string
-  generatedAt: (date: string) => string
   periodLabel: string
-  frequencyLabel: string
-  frequencyValue: string
   noData: string
+  offDayLabel: string
   column: {
     no: string
     date: string
     participants: string
-    status: string
     specialDay: string
-  }
-  status: {
-    historical: string
-    planned: string
-    offDay: string
   }
   keyHolder: string
 }
@@ -105,28 +97,17 @@ function renderRow(row: PrintRow, index: number, labels: PrintExportLabels, loca
   const rowClass =
     row.kind === 'historical' ? 'row-historical' : row.kind === 'offDay' ? 'row-offday' : 'row-planned'
 
-  const participantsHtml = row.participants
-    .map((p) => {
-      const escapedName = escapeHtml(p.name)
-      return p.isKeyHolder
-        ? `<span class="participant key-holder">${escapedName} <span class="key-badge">[${escapeHtml(labels.keyHolder)}]</span></span>`
-        : `<span class="participant">${escapedName}</span>`
-    })
-    .join('')
-
-  const statusLabel =
-    row.kind === 'historical'
-      ? labels.status.historical
-      : row.kind === 'offDay'
-        ? labels.status.offDay
-        : labels.status.planned
-
-  const statusClass =
-    row.kind === 'historical'
-      ? 'status-historical'
-      : row.kind === 'offDay'
-        ? 'status-offday'
-        : 'status-planned'
+  const participantsHtml =
+    row.kind === 'offDay'
+      ? `<span class="offday-label">${escapeHtml(labels.offDayLabel)}</span>`
+      : row.participants
+          .map((p) => {
+            const escapedName = escapeHtml(p.name)
+            return p.isKeyHolder
+              ? `<span class="participant key-holder">${escapedName} <span class="key-badge">[${escapeHtml(labels.keyHolder)}]</span></span>`
+              : `<span class="participant">${escapedName}</span>`
+          })
+          .join('')
 
   const specialDayHtml = row.specialDayName
     ? `<span class="special-day-badge">${escapeHtml(row.specialDayName)}</span>`
@@ -136,7 +117,6 @@ function renderRow(row: PrintRow, index: number, labels: PrintExportLabels, loca
         <td class="cell-no">${String(index + 1).padStart(2, '0')}</td>
         <td class="cell-date">${escapeHtml(formatDate(row.date, locale))}</td>
         <td class="cell-participants">${participantsHtml}</td>
-        <td class="cell-status"><span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span></td>
         <td class="cell-special">${specialDayHtml}</td>
       </tr>`
 }
@@ -148,15 +128,6 @@ export function generateScheduleHTML(
 ): string {
   const { settings } = data
   const rows = buildPrintRows(data)
-
-  const now = new Date()
-  const formattedNow = now.toLocaleDateString(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
 
   const startFormatted = escapeHtml(formatDate(settings.startDate, locale))
   const endFormatted = escapeHtml(formatDate(settings.endDate, locale))
@@ -172,7 +143,6 @@ export function generateScheduleHTML(
         <th class="cell-no">${escapeHtml(labels.column.no)}</th>
         <th class="cell-date">${escapeHtml(labels.column.date)}</th>
         <th class="cell-participants">${escapeHtml(labels.column.participants)}</th>
-        <th class="cell-status">${escapeHtml(labels.column.status)}</th>
         <th class="cell-special">${escapeHtml(labels.column.specialDay)}</th>
       </tr>
     </thead>
@@ -236,7 +206,6 @@ ${tableRowsHtml}
     tr:last-child td { border-bottom: none; }
     .cell-no { width: 40px; font-family: monospace; font-weight: 600; }
     .cell-date { width: 160px; font-family: monospace; white-space: nowrap; }
-    .cell-status { width: 130px; }
     .cell-special { width: 160px; }
     .row-historical td { opacity: 0.65; }
     .row-offday td { background: #fffbf0; }
@@ -259,17 +228,16 @@ ${tableRowsHtml}
       font-weight: 700;
       color: #555;
     }
-    .status-badge {
+    .offday-label {
       display: inline-block;
       padding: 2px 8px;
       border-radius: 4px;
       font-size: 11px;
       font-weight: 600;
-      border: 1px solid;
+      color: #c2410c;
+      border: 1px solid #fdba74;
+      background: #fff7ed;
     }
-    .status-historical { color: #666; border-color: #ccc; background: #f5f5f5; }
-    .status-planned { color: #15803d; border-color: #86efac; background: #f0fdf4; }
-    .status-offday { color: #c2410c; border-color: #fdba74; background: #fff7ed; }
     .special-day-badge {
       display: inline-block;
       padding: 2px 8px;
@@ -286,21 +254,12 @@ ${tableRowsHtml}
       color: #888;
       font-style: italic;
     }
-    footer {
-      margin-top: 24px;
-      padding-top: 12px;
-      border-top: 1px solid #e5e5e5;
-      font-size: 11px;
-      color: #999;
-      text-align: right;
-    }
     @media print {
       body { padding: 0; font-size: 11px; }
       thead { display: table-header-group; }
       tr { page-break-inside: avoid; }
       .row-offday td { background: transparent !important; }
       .row-historical td { opacity: 1 !important; color: #666; }
-      footer { display: none; }
     }
   </style>
 </head>
@@ -312,14 +271,9 @@ ${tableRowsHtml}
         <span class="meta-label">${escapeHtml(labels.periodLabel)}:</span>
         <span>${startFormatted} &ndash; ${endFormatted}</span>
       </div>
-      <div class="meta-item">
-        <span class="meta-label">${escapeHtml(labels.frequencyLabel)}:</span>
-        <span>${escapeHtml(labels.frequencyValue)}</span>
-      </div>
     </div>
   </header>
   ${tableHtml}
-  <footer>${escapeHtml(labels.generatedAt(formattedNow))}</footer>
 </body>
 </html>`
 }

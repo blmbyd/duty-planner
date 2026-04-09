@@ -133,6 +133,7 @@ export const pl: Translations = {
     startDate: 'Data poczatkowa',
     endDate: 'Data koncowa',
     language: 'Jezyk interfejsu',
+    printTitle: 'Naglowek wydruku',
     backup: {
       title: 'Backup danych',
       export: 'Eksportuj dane do pliku',
@@ -213,21 +214,14 @@ export const pl: Translations = {
     },
     labels: {
       pageTitle: 'Harmonogram Dyzurow - Wydruk',
-      generatedAt: (date) => `Wygenerowano: ${date}`,
       periodLabel: 'Okres',
-      frequencyLabel: 'Czestotliwosc',
       noData: 'Brak dyzurow do wydruku w wybranym okresie.',
+      offDayLabel: 'Dzien wolny',
       column: {
         no: '#',
         date: 'Data',
         participants: 'Uczestnicy',
-        status: 'Status',
         specialDay: 'Dzien specjalny',
-      },
-      status: {
-        historical: 'Wykonany',
-        planned: 'Zaplanowany',
-        offDay: 'Dzien wolny',
       },
       keyHolder: 'K',
     },
