@@ -23,7 +23,7 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 - Oferuje dwa tryby uzupełniania harmonogramu: domyślny tryb ignoruje istniejące pozycje i dodaje tylko nowe daty, a tryb uzupełniania brakujących osób wykrywa niekompletne dyżury i dopisuje do nich brakującą obsadę (osoby z kluczami i dodatkowych uczestników).
 - Pokazuje lekkie statystyki udziału uczestników dla dyżurów planowanych i historycznych.
 - Eksportuje i importuje pełny stan aplikacji jako JSON.
-- Umożliwia wygenerowanie wydruku harmonogramu jako osobna strona HTML — otwierana w nowej karcie przeglądarki — obejmującego dyżury planowane, historyczne i dni wolne z zakresu dat skonfigurowanego w ustawieniach, wraz z nagłówkiem zawierającym metadane okresu i częstotliwości.
+- Umożliwia wygenerowanie wydruku harmonogramu jako osobna strona HTML — otwierana w nowej karcie przeglądarki — obejmującego dyżury planowane, historyczne i dni wolne z zakresu dat wybranego dla wydruku (domyślnie z ustawień harmonogramu), wraz z nagłówkiem zawierającym metadane okresu.
 
 ## Główny przebieg pracy
 
@@ -37,7 +37,7 @@ Aplikacja została zbudowana przy użyciu Reacta, TypeScriptu, Vite, Tailwind CS
 8. Opcjonalnie uzupelnij obsade wybranego biezacego lub przyszlego dyzuru za pomoca przycisku "Uzupelnij dzien" w wierszu tabeli — przycisk dopisuje brakujaca obsluge bez zmiany pozostalych dni. Przycisk nie jest dostepny dla wpisow historycznych ani dla wpisow z data przeszla.
 9. Opcjonalnie edytuj sklad uczestnikow i powiazany dzien specjalny dowolnego istniejacego dyzuru za pomoca przycisku olowka przy wierszu w tabeli harmonogramu.
 10. Wygeneruj lub uzupełnij harmonogram.
-12. Opcjonalnie otwórz widok do wydruku za pomocą przycisku "Drukuj" w panelu harmonogramu — wydruk obejmuje zaplanowane dyżury, historyczne dyżury i dni wolne z bieżącego zakresu dat ustawień.
+12. Opcjonalnie ustaw nagłówek i zakres dat wydruku w panelu ustawień, a następnie otwórz widok do wydruku za pomocą przycisku "Drukuj" w panelu harmonogramu — wydruk obejmuje zaplanowane dyżury, historyczne dyżury i dni wolne tylko z wybranego zakresu.
 13. W razie potrzeby wyeksportuj stan do pliku kopii zapasowej.
 
 ## Zasady planowania
@@ -66,7 +66,7 @@ Generator jest celowo pragmatyczny, a nie w pełni deterministyczny:
 - Import całkowicie zastępuje bieżący stan zapisany w przeglądarce.
 - Pliki eksportowane w poprzednich wersjach aplikacji (z polem `manualShifts`, bez `offDays` lub bez `participantAbsences`) są nadal obsługiwane — wpisy z `manualShifts` są automatycznie scalane do wspólnego harmonogramu, a brakujące pola uzupełniane pustymi tablicami.
 - Preferencja językowa jest przechowywana oddzielnie w local storage pod kluczem `duty-planner:v1:language`.
-- Wydruk harmonogramu generuje osobną stronę HTML otwieraną w nowej karcie przeglądarki; strona zawiera tabelę dyżurów dla bieżącego zakresu dat z ustawień, nagłówek z metadanymi i osadzony CSS dostosowany do druku — niezależnie od backupu JSON.
+- Wydruk harmonogramu generuje osobną stronę HTML otwieraną w nowej karcie przeglądarki; strona zawiera tabelę dyżurów dla zakresu dat ustawionego dla wydruku (z domyślnym fallbackiem do zakresu harmonogramu), nagłówek z metadanymi i osadzony CSS dostosowany do druku — niezależnie od backupu JSON.
 
 ## Wielojęzyczność
 

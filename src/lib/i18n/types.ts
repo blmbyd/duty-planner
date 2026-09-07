@@ -128,6 +128,8 @@ export interface Translations {
     endDate: string
     language: string
     printTitle: string
+    printStartDate: string
+    printEndDate: string
     backup: {
       title: string
       export: string
@@ -203,6 +205,7 @@ export interface Translations {
     toast: {
       success: string
       error: string
+      invalidRange: string
     }
     labels: {
       pageTitle: string

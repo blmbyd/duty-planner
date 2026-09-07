@@ -23,6 +23,8 @@ export interface ShiftSettings {
   endDate: string
   specialDays: SpecialDay[]
   printTitle?: string
+  printStartDate?: string
+  printEndDate?: string
 }
 
 export interface Shift {
@@ -66,5 +68,7 @@ export const DEFAULT_SETTINGS: ShiftSettings = {
   startDate: _fmt(new Date()),
   endDate: _fmt(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
   specialDays: [],
-  printTitle: ''
+  printTitle: '',
+  printStartDate: '',
+  printEndDate: ''
 }

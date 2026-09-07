@@ -134,6 +134,8 @@ export const pl: Translations = {
     endDate: 'Data koncowa',
     language: 'Jezyk interfejsu',
     printTitle: 'Naglowek wydruku',
+    printStartDate: 'Data poczatkowa wydruku',
+    printEndDate: 'Data koncowa wydruku',
     backup: {
       title: 'Backup danych',
       export: 'Eksportuj dane do pliku',
@@ -211,6 +213,7 @@ export const pl: Translations = {
     toast: {
       success: 'Otworzono widok do wydruku',
       error: 'Nie mozna otworzyc widoku wydruku. Sprawdz, czy przegladarka nie blokuje nowych okien.',
+      invalidRange: 'Data koncowa wydruku nie moze byc wczesniejsza niz data poczatkowa.',
     },
     labels: {
       pageTitle: 'Harmonogram Dyzurow - Wydruk',

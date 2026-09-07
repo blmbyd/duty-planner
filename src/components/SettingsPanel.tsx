@@ -39,6 +39,7 @@ export function SettingsPanel({ settings, maxPeople, language, onUpdate, onLangu
   }
 
   const availableLanguages = Object.entries(LANGUAGE_LABELS) as [AppLanguage, string][]
+  const effectivePrintStartDate = settings.printStartDate || settings.startDate
 
   return (
     <Card>
@@ -127,6 +128,37 @@ export function SettingsPanel({ settings, maxPeople, language, onUpdate, onLangu
             type="text"
             value={settings.printTitle ?? ''}
             onChange={(e) => onUpdate({ printTitle: e.target.value })}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="printStartDate">{t.settings.printStartDate}</Label>
+          <Input
+            id="printStartDate"
+            type="date"
+            min={settings.startDate}
+            max={settings.endDate}
+            value={settings.printStartDate ?? ''}
+            onChange={(e) => {
+              const nextPrintStartDate = e.target.value
+              if (settings.printEndDate && nextPrintStartDate && settings.printEndDate < nextPrintStartDate) {
+                onUpdate({ printStartDate: nextPrintStartDate, printEndDate: nextPrintStartDate })
+                return
+              }
+              onUpdate({ printStartDate: nextPrintStartDate })
+            }}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="printEndDate">{t.settings.printEndDate}</Label>
+          <Input
+            id="printEndDate"
+            type="date"
+            min={effectivePrintStartDate}
+            max={settings.endDate}
+            value={settings.printEndDate ?? ''}
+            onChange={(e) => onUpdate({ printEndDate: e.target.value })}
           />
         </div>
 
