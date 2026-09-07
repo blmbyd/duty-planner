@@ -167,6 +167,13 @@ function App() {
 
   const handlePrintExport = () => {
     try {
+      const printStartDate = settings.printStartDate || settings.startDate
+      const printEndDate = settings.printEndDate || settings.endDate
+      if (printEndDate < printStartDate) {
+        toast.error(t.printExport.toast.invalidRange)
+        return
+      }
+
       const labels: PrintExportLabels = {
         pageTitle: t.printExport.labels.pageTitle,
         appTitle: settings.printTitle?.trim() || t.app.title,
@@ -179,7 +186,11 @@ function App() {
       const html = generateScheduleHTML(
         {
           participants: participantsState.participants,
-          settings,
+          settings: {
+            ...settings,
+            startDate: printStartDate,
+            endDate: printEndDate,
+          },
           schedule: scheduleState.schedule,
           historicalShifts: historyState.historicalShifts,
           offDays: offDaysState.offDays,
